@@ -5,11 +5,16 @@ use std::{
     task::{self, Context, Poll, RawWaker, RawWakerVTable, Waker},
 };
 
-struct DistConst<T>(T)
+use rand::prelude::*;
+
+struct TwoPoint<T>(T, T)
 where
     T: Clone;
 
-impl<T: Clone> Future for DistConst<T> {
+impl<T> Future for TwoPoint<T>
+where
+    T: Clone,
+{
     type Output = T;
 
     fn poll(
@@ -20,7 +25,12 @@ impl<T: Clone> Future for DistConst<T> {
 
         cx.waker().wake_by_ref();
 
-        Poll::Ready(self.0.clone())
+        if random() {
+            Poll::Ready(self.0.clone())
+        } else {
+            Poll::Ready(self.1.clone())
+            // Poll::Pending
+        }
     }
 }
 
@@ -31,7 +41,7 @@ impl<T: Clone> Future for DistConst<T> {
 async fn test() -> u64 {
     let mut y = 0;
     for _ in 0..10 {
-        y += DistConst(1729).await;
+        y += TwoPoint(17, 29).await;
     }
     y
 }
