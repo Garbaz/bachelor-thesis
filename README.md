@@ -1,8 +1,8 @@
-# Bachelor Thesis
+# Bachelor Thesis: An Implementation of embedded probabilistic programming in Rust
 
 The code of this project is at [**Garbaz/probprog**](https://github.com/Garbaz/probprog).
 
-## Topic Proposal: An Implementation of embedded probabilistic programming in Rust
+## The Plan
 
 Main orientation paper: [Lightweight Implementations of Probabilistic Programming Languages Via Transformational Compilation](http://proceedings.mlr.press/v15/wingate11a/wingate11a.pdf)
 
@@ -10,7 +10,7 @@ Main orientation paper: [Lightweight Implementations of Probabilistic Programmin
 - Implement a macro that allows for writing of probabilistic functions without having to manually interact with the tracing system directly
 - Implement an MCMC algorithm for general conditional inference
 
-### Further references
+## Further references
 
 - [dippl.org](http://dippl.org/)
 - [probmods.org](http://probmods.org/)
