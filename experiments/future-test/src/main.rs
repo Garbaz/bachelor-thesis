@@ -1,5 +1,6 @@
 use std::{
     future::Future,
+    mem::transmute,
     pin::Pin,
     ptr::NonNull,
     task::{self, Context, Poll, RawWaker, RawWakerVTable, Waker},
@@ -7,13 +8,16 @@ use std::{
 
 use rand::prelude::*;
 
+#[derive(Debug)]
+struct Trace(Vec<String>);
+
 struct TwoPoint<T>(T, T)
 where
     T: Clone;
 
 impl<T> Future for TwoPoint<T>
 where
-    T: Clone,
+    T: Clone + std::fmt::Display,
 {
     type Output = T;
 
@@ -21,16 +25,23 @@ where
         self: std::pin::Pin<&mut Self>,
         cx: &mut task::Context<'_>,
     ) -> Poll<Self::Output> {
-        println!("TestDist polled!");
+        // println!("TestDist polled!");
 
-        cx.waker().wake_by_ref();
+        // cx.waker().wake_by_ref();
 
-        if random() {
-            Poll::Ready(self.0.clone())
+        let cx: &mut EvilContext = unsafe { transmute(cx) };
+
+        // println!("{:?}", cx);
+
+        let result = if random() {
+            self.0.clone()
         } else {
-            Poll::Ready(self.1.clone())
-            // Poll::Pending
-        }
+            self.1.clone()
+        };
+
+        cx.0.0.push(format!("TwoPoint({},{}) -> {}", self.0, self.1, result));
+
+        Poll::Ready(result)
     }
 }
 
@@ -46,7 +57,7 @@ async fn test() -> u64 {
     y
 }
 
-unsafe fn v_clone(p: *const ()) -> RawWaker {
+/* unsafe fn v_clone(p: *const ()) -> RawWaker {
     println!("clone");
     RawWaker::new(p, &RAW_WAKER_VTABLE)
 }
@@ -73,13 +84,16 @@ static RAW_WAKER_VTABLE: RawWakerVTable =
     RawWakerVTable::new(v_clone, v_wake, v_wake_by_ref, v_drop);
 
 #[derive(Debug)]
-struct WakerData(u64);
+struct WakerData(u64); */
+
+#[derive(Debug)]
+struct EvilContext(Trace);
 
 fn main() {
     let mut a = test();
     let b = unsafe { Pin::new_unchecked(&mut a) };
 
-    let mut data = WakerData(0);
+    /* let mut data = WakerData(0);
     let nn = unsafe { NonNull::new_unchecked(&mut data as *mut WakerData) };
 
     let w = unsafe {
@@ -88,9 +102,14 @@ fn main() {
             &RAW_WAKER_VTABLE,
         ))
     };
-    let mut c = Context::from_waker(&w);
-    let p = b.poll(&mut c);
+    let mut c = Context::from_waker(&w); */
 
-    println!("{:?}", data);
+    let mut ecx = EvilContext(Trace(Vec::new()));
+
+    // let p = b.poll(&mut c);
+    let p = b.poll(unsafe { transmute(&mut ecx) });
+
+    // println!("{:?}", data);
     println!("{:?}", p);
+    println!("{:#?}", ecx);
 }
