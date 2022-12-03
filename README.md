@@ -1,4 +1,4 @@
-# Bachelor Thesis: Embedded probabilistic programming in Rust
+# Embedded probabilistic programming in Rust
 
 The code of this project is at [**Garbaz/probprog**](https://github.com/Garbaz/probprog).
 
