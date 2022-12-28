@@ -6,9 +6,9 @@ The code of this project is at [**Garbaz/probprog**](https://github.com/Garbaz/p
 
 Main orientation paper: [Lightweight Implementations of Probabilistic Programming Languages Via Transformational Compilation](http://proceedings.mlr.press/v15/wingate11a/wingate11a.pdf)
 
-[X] Implement the infrastructure for traced probabilistic procedures
-[ ] Implement a macro that allows for writing of probabilistic functions without having to interact with the tracing system directly
-[X] Implement an MCMC algorithm for general conditional inference
+- [X] Implement the infrastructure for traced probabilistic procedures
+- [ ] Implement a macro that allows for writing of probabilistic functions without having to interact with the tracing system directly
+- [X] Implement an MCMC algorithm for general conditional inference
 
 ## Further references
 
