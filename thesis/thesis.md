@@ -1,0 +1,33 @@
+# Abstract
+
+# Introduction
+
+# Markov Chain Monte Carlo
+
+## Probability Theory Basics
+
+## Markov Chain
+
+## Metropolis-Hastings Algorithm
+
+## Trace Space
+
+## Condition & Observe
+
+# Implementation
+
+# Conclusion & Related Work
+
+# References
+
+# Declaration
+
+I hereby declare, that I am the sole author and composer of my thesis and that no
+other sources or learning aids, other than those listed, have been used. Furthermore, I
+declare that I have acknowledged the work of others by providing detailed references
+of said work.
+I also hereby declare that my thesis has not been prepared for another examination or
+assignment, either in its entirety or excerpts thereof.
+
+- Place & Date: **TODO TODO TODO**
+- Signature: **TODO TODO TODO**
