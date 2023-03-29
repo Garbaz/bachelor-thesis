@@ -1,6 +1,6 @@
 # The Metrpolis Hastings Algorithm
 
-While there are many MCMC algorithms, with differing conditions for application and advantages/disadvantages in terms implementation complexity and performance, we will focus here on a principally rather simple algorithm based upon seminal work by N. Metropolis et al and W. K. Hastings, the "Metropolis-Hastings algorithm" (MH).
+While there are many MCMC algorithms, with differing conditions for application and advantages/disadvantages in terms of implementation complexity and performance, we will focus here on a principally rather simple algorithm based upon seminal work by N. Metropolis et al and W. K. Hastings, the "Metropolis-Hastings algorithm" (MH).
 
 Like with all MCMC algorithms, the problem we are trying to solve with MH is the need to obtain samples from some distribution of interest $\pi$, the _target_, and the general method is to explore the space $\mathbb{X}$ of possible samples from $\pi$, it's _support_, via a Markov chain that iteratively steps through this space. How these steps are taken is the primary distinction between different MCMC methods.
 
@@ -42,7 +42,7 @@ Repeat forever:
     (4) If U <= A, then X_current := X_proposal
 ```
 
-One in theory curious and in practice highly relevant property to note about the definition of MH is the fact that the only ever need to know a ratio $\frac{\pi(x)}{\pi(y)}$ between two values of the probability density function $\pi(x)$. This means that we do not actually have to be able to compute $\pi(x)$ directly, but rather that it is sufficient to be able to compute some proportional function $\tilde{\pi}(x) \propto \pi(x)$.
+One in practice highly relevant property to note about the definition of MH is the fact that we only ever need to compute a ratio $\frac{\pi(x)}{\pi(y)}$ between two results of the probability density function $\pi(x)$. This means that we do not actually have to be able to compute $\pi(x)$ directly, but rather that it is sufficient to be able to compute some proportional function $\tilde{\pi}(x) \propto \pi(x)$, since $\frac{\tilde{\pi}(x)}{\tilde{\pi}(y)} = \frac{\pi(x)}{\pi(y)}$.
 
 As a very common practical example, say we would like to generate samples from some posterior distribution:
 
@@ -50,5 +50,7 @@ $$
 \pi(x) = p(x | w) = \frac{p(w | x) p(x)}{p(w)}
 $$
 
-While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly calculating $p(w)$ is rather difficult or impossible. Usually one would have to calculate $p(w) = \int p(w | x) p(x) dx$, which can be rather costly. With MH however, since we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any costly integrals.
+While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly getting a value for $p(w)$ is rather difficult or impossible. Usually one would have to compute it from the other two quantities as $p(w) = \int p(w | x) p(x) dx$, which can be rather costly.
+
+With MH however, since $p(w)$ does not depend on $x$ and we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w) \pi(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any costly integrals.
 

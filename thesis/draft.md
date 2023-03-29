@@ -48,9 +48,6 @@ As a tangible example, one might consider the one dimensional array of integer n
 
 ## Metropolis Hastings
 
-For MH we only need to know P up to some proportionality constant.
-
-
 # MCMC in Trace Space
 
 # Embedded Probabilistic Programming
