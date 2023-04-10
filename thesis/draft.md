@@ -1,6 +1,7 @@
 ## Abstract
 
-The paradigm of probabilistic programming allows the expression of computationally arbitrary generative probabilistic models and provides model-independent generic inference techniques over them. We present here an overview over the theory behind a general class of commonly employed inference algorithms, Markov chain Monte Carlo (MCMC) methods, the working details of one particular general MCMC algorithm, the Metropolis Hastings algorithm, and a concrete implementation of probabilistic programming embedded into the imperative programming language Rust via the use of macros.
+The paradigm of probabilistic programming allows for the expression of computationally arbitrary generative probabilistic models and provides general model-independent inference algorithms over them. This paper presents and overview over the theory behind one particular commonly employed inference algorithm, the Metropolis-Hastings algorithm, how it can be applied to probabilistic programs, and an implementation of a probabilistic programming framework embedded into the imperative programming language Rust through the use of Rust's macro system.
+
 
 ## Introduction
 
@@ -29,6 +30,7 @@ To solve this problem with MCMC methods, three considerations have to be made: W
 While there any many answers to the final of these three questions, the first two have relatively straightforward solutions. The space we will explore with MCMC is the space of possible executions of a probabilistic program at hand, more specifically the space of traces of draws from primitive distributions throughout it. And to calculate the probability of some particular trace being a possible execution of the program, we simply run the program and accumulate the probabilities of the individual draws and observations of values from primitive distributions as we encounter them during execution.
 
 ## Probability Theory
+
 
 
 
@@ -100,20 +102,20 @@ $$
 \pi(x) = p(x | w) = \frac{p(w | x) p(x)}{p(w)}
 $$
 
-While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly getting a value for $p(w)$ is rather difficult or impossible. Usually one would have to compute it from the other two quantities as $p(w) = \int p(w | x) p(x) dx$, which can be rather costly.
+While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly getting a value for $p(w)$ is rather difficult or even impossible. Usually one would have to compute it from the other two quantities as $p(w) = \int p(w | x) p(x) dx$, which can be rather costly.
 
-With MH however, since $p(w)$ does not depend on $x$ and we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w) \pi(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any costly integrals.
+With MH however, since $p(w)$ does not depend on $x$ and we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w) \pi(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with respect to $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any costly integrals.
 
 
 ## Probabilistic Programs
 
 A probabilistic program for the purposes of our implementation here is syntactically simply an ordinary function in an (in our case imperative) programming language. This function can contain any code constructs that are part of the host language, including potentially troublesome things like conditionals, loops and recursion. However, a probabilistic program can, as opposed to an ordinary function, contain two additional syntax elements: "sample" expressions and "observe" statements.
 
-Besides the syntactic difference to an ordinary function, the execution of a probabilistic program also differs in a significant way. In addition to running the code as normal, during execution track is kept of what distributions are sampled from with what parameters, what values are drawn and how probable drawing these values was, and most importantly, the total probability of the particular execution happening.
+Besides the syntactic difference to an ordinary function, the execution of a probabilistic program also differs in a significant way. In addition to running the code as normal, during execution track is kept of what distributions are sampled from with what parameters, what values are drawn and how probable the drawing of these values was, and most importantly, the total probability of the particular execution happening. This _trace_ of the probabilistic programs execution allows for the application of inference algorithms, as will be detailed later on.
 
 ### Sample Expression
 
-A sample expression is semantically rather simple, it allows us to sample a value from some distribution, be it a primitve distribution provided by our implementation, or a distribution defined by another probabilistic program. The resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call.
+A sample expression is semantically rather simple, it allows us to sample a value from some distribution, be it a primitve distribution provided by our implementation or a distribution defined as another probabilistic program. For the regular semantics of the program the resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call. However, upon a sample expression being encountered during execution it is recorded to the execution's trace what distribution has been sampled from with what parameters, what value has been drawn, and how likely it was for this value to come from the distribution.
 
 ```rs
 /// Sampling from a primitve distribution and using recursion
@@ -127,7 +129,9 @@ fn example1(p : f64) -> u64 {
 
     c
 }
+```
 
+```rs
 /// Sampling from another probabilistic program and using conditionals & recursion
 #[prob]
 fn example2(n : u64) -> u64 {
@@ -139,10 +143,10 @@ fn example2(n : u64) -> u64 {
 }
 ```
 
+
 ### Observe Statement
 
-
-The other special kind of expression we can use in a probabilistic program is an `observe` statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution. We essentially say that "we know that this value is the result of sampling from this distribution", which might or might not be likely.
+The other special kind of expression we can use in a probabilistic program is an `observe` statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution. We essentially say that "we know that this value is the result of sampling from this distribution", which might or might not be likely, correspondingly affecting the likelihood of the final value resulting from the probabilistic program as a whole. 
 
 Neither the value we are observing, nor any parameters to the distribution have to be constant. They can result from any arbitrary combination of ordinary and probabilistic computations. However, we can not observe values from a distribution defined by another probabilistic program, only from primitive distributions.
 
@@ -160,7 +164,9 @@ fn example3(obs : [bool]) -> f64 {
 
     p
 }
+```
 
+```rs
 /// What might have been the start position of a random walk, given we know the end position and the number of steps?
 #[prob]
 fn example4(steps : u64, end_pos : f64) -> f64 {
@@ -177,7 +183,178 @@ fn example4(steps : u64, end_pos : f64) -> f64 {
 }
 ```
 
+### Condition Statement
+
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard condition on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary boolean expression evaluates to $\text{true}$, and if it doesn't, the likelihood of the whole execution is set to $0$. Otherwise, it does nothing.
+
+Just like with the observe statment, the condition statement doesn't interfer at all with the regular execution of the program, but rather only affects the calculation of the total likelihood. So in the end, even if the expression inside a condition statement evaluates to $\text{false}$, the function will continue as normal and still return a value as normal, but the associated likelihood is $0$.
+
+In fact, the effect of a condition statement is no different from an observe statement with the value of the boolean expression being observed from a distribution from which we sample the value $\text{true}$ with a likelihood of $1$, like for example a Bernoulli distribution $\text{Bern}(p)$ with a parameter of $p=1$. However, in pratice, both for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
+
+It should be noted however, that, whenever possible, we should try to soften any hard conditions in our program to observes, to allow for executions that don't quite satisfy our constraints to have non-zero likelihood. Otherwise, there is no way for the inference algorithm to know whether a sample from the program has a likelihood of 0 because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
+
+In the following we will only concern ourselves with sample expressions and observe statements, with condition statements being simply a particular kind of observe statement.
+
+
+```rs
+/// Modelling heights of e.g. people with a normal distribution around some mean value.
+/// However, a person's height can never be negative!
+#[prob]
+fn example5(mean_height : f64, deviation : f64) -> f64 {
+    let height = sample!(normal(mean_height, deviation));
+    condition!(height > 0);
+    height
+}
+
+/// Instead of the condition expression, we could also simply observe the value of
+/// our expression from a `bernoulli(1.)` distribution.
+#[prob]
+fn example5b(mean_height : f64, deviation : f64) -> f64 {
+    let height = sample!(normal(mean_height, deviation));
+    observe!(bernoulli(1.), height > 0);
+    height
+}
+
+/// We can even simply define condition as a probabilistic program.
+#[prob]
+fn condition(c : bool) {
+    observe!(bernoulli(1.), c);
+}
+```
+
 
 ## Trace Space
 
+If our probabilistic program only contains sample expressions and no observe (or condition) statements, drawing samples from the distribution represented by it is as simple as just running the program as normal. However, if we were to do the same with a program that does contain observe statements, we would get samples that do not represent the actual distribution described by the program. We could even get samples with a likelihood of $0$, simply by the execution resulting in that sample containing observe statement that are impossible. In general, a probabilistic program with observe statements does not directly function as a sampler for the distribution it represents. All it does is to produce random values and correctly calculate the likelihood of these values.
+
+And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from out program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the likelihood of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask the program how likely it would have been for it to return this value.
+
+However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. That is, if rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total likelihood of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total likelihood for this execution, but for a _trace_ of predetermined values.
+
+So a trace of a probabilistic program is simply some representation of all the evaluations of sample expressions that are encountered during some particular possible execution of the program. This trace can contain a different number of entries for different executions, if for example the number of times a sample expression inside a loop is encountered depends on a previous sample expression. And it can also be that the n-th sample expression we encounter during some execution is completely different from the n-th one we encounter during a different execution, if for example we were to sample from a normal distribution in one branch of an `if` and from a Bernoulli distribution in the other. So "picking" some actually possible trace for a probabilistic program at hand is not straightforward. And even if we have a possible trace, were we to make any changes to it, there is no certainty that the modified trace still represents a possible execution of the program.
+
+```rs
+/// Depending on how many times we drawn a `false` from
+/// the Bernoulli distribution, a different number of sample
+/// expressions is encountered during an execution.
+#[prob]
+fn example6(p : f64) -> usize {
+    if sample!(bernoulli(p)) {
+        0
+    } else {
+        1 + sample!(example6(p))
+    }
+}
+```
+
+```rs
+/// Depending on whether we sample `true` or `false` from the
+/// Bernoulli distribution, the second sample expression we encounter
+/// could either be to again sample from a Bernoulli distribution or
+/// to sample from a normal distribution. 
+#[prob]
+fn example7() -> f64 {
+    if sample!(bernoulli(0.1)) {
+        if sample!(bernoulli(0.5)) {
+            1.
+        } else {
+            -1.
+        }
+    } else {
+        sample!(normal(0., 1.))
+    }
+}
+```
+
+We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution.
+
+Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters. In this case, we can still deterministically use the value from the trace, but have to re-evaluate the likelihood under the new parameters.
+
+```rs
+/// Depending on the value sampled from the uniform distribution
+/// the parameters for the normal distribution differ.
+#[prob]
+fn example8(m : f64) -> f64 {
+    let s = sample!(uniform(0., 10.));
+    sample!(normal(m, s))
+}
+```
+
+We can mostly treat sample expressions that sample from other probabilistic programs the same as ones that sample from primitive distributions. However rather than our trace containing a predetermined resulting value for the sub-program, it contains a predetermined sub-trace for it. We simply semi-deterministically run the sub-program on this sub-trace, possibly updating it along the way, just as we are doing for the main program.
+
+```rs
+#[prob]
+fn flip() -> bool {
+    sample!(bernoulli(0.5))
+}
+
+/// A probabilistic program that samples from another probabilstic program.
+/// One possible trace for this program would look something like this:
+///   +- (uniform, (0., 10.), 1.2345)
+///   +--+ "flip"
+///   │  +- (bernoulli, (0.5), true)
+///   +- (normal, (0., 1.), -0.6789)
+#[prob]
+fn example9() -> f64 {
+    let x = sample!(uniform(0., 10.));
+    let y = if sample!(flip()) {
+        sample!(normal(0., 1.))
+    } else {
+        sample!(uniform(-1., 1.))
+    }
+    x + y
+}
+```
+
+Since the number of times any sample expressions appearing inside loops in our probabilistic program are encountered can depend on the value of prior sampling expressions, we will also alot for every iteration of a loop a sub-trace, such that the number of times a loop is executed does not affect whether or not the entry in the trace corresponding to any sample expressions appearing after to loop is found or missed.
+
+So formally, we define a trace as a tree $T := L(\mathbb{N_0}, T) | F(\mathbb{I}, T) | P(D,P,V)$.\
+A node $L(n,t)$ represents an iteration $n$ of a loop and it's correspoding sub-trace $t$.\
+A node $F(i, t)$ represents a sample expression sampling from another probabilistic program identified by $i$, and the corresponding sub-trace $t$.\
+And a node $P(d,p,v)$ represents a sample expression sampling from a primitive distribution $d$ with parameters $p$, and the sampled value $v$.
+
+We define the semi-deterministic evaluation of a probabilistic program $f$ for a given trace $t$ as follows:
+
+```
+Execute f as normal.
+Every time any kind of loop expression would be evaluated, do instead:
+    - Initialize a counter c to 0
+    - For every iteration of the loop:
+        (1) Look in t whether a sub-trace for this iteration exists
+        (2) If it doesn't, create a new one and attach it to t
+        (3) Shadow t to be this sub-trace for the scope of this iteration
+        (4) Run the body of the loop as normal
+        (5) Increment the counter by 1
+Every time a sample expression would be evaluated, do instead:
+    - If it's sampling another probabilistic program g:
+        (1) Look in t whether a sub-trace for g exists
+        (2) If it doesn't, create a new one and attach it to t
+        (3) Semi-deterministically evaluate g for the subtrace
+        (4) Update the subtrace to the one generated by g
+        (5) Multiply the calculated likelihood from g onto the total likelihood
+    - If it's sampling a primitive distribution d with parameters p:
+        (1) Look in t whether an entry for d exists
+        (2) If it doesn't, sample from d(p) as normal and add an entry to t
+        (3) If it does:
+            - Take the value from entry
+            - If the parameters from the entry differ from p, update the entry
+        (4) Calculate likelihood and multiply onto total likelihood
+Every time an observe statement would be evaluated, do instead:
+    - Calculate the likelihood of the value coming from the distribution
+    - Multiply this likelihood onto the total likelihood
+Return the resulting value, the calulated total likelihood and the updated trace
+```
+
+
+## Inference
+
+
+
+
 ## Embedding into Rust
+
+## Examples
+
+## Outlook & Related Work
+
+## Conclusion
