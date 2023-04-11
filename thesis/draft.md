@@ -54,11 +54,11 @@ As a tangible example, one might consider the one dimensional array of integer n
 
 While there are many MCMC algorithms, with differing conditions for application and advantages/disadvantages in terms of implementation complexity and performance, we will focus here on a principally rather simple algorithm based upon seminal work by N. Metropolis et al and W. K. Hastings, the "Metropolis-Hastings algorithm" (MH).
 
-As with any MCMC algorithm, the problem we are trying to solve with MH is the need to obtain representative samples from some distribution of interest $\pi$, the _target_, and the general method to do so is to explore the space $\mathbb{X}$ of possible samples from $\pi$, it's _support_, via the iterative development of a Markov chain through this space. How these steps are taken is the primary distinction between different MCMC methods.
+As with any MCMC algorithm, the problem we are trying to solve with MH is the need to obtain representative samples from some distribution of interest $\pi$, the _target_, and the general method to do so is to explore the $\mathbb{X}$ of possible samples from $\pi$, it's _support_, via the iterative development of a Markov chain through this space. How these steps are taken is the primary distinction between different MCMC methods.
 
-To apply MH to sampling from some distribution $\pi$, we need to pick a (usually, relative to $\pi$, very simple) distribution $q$, a _kernel_, with the same support as $\pi$. This kernel defines our exploration of the support $\mathbb{X}$. Specifically, at step $X_t = x_t$ in our Markov chain we use $q$ to choose a possible next step $\hat{X}_{t+1} \sim q[x_t]$. So $q$ can, and usually will, depend on the current position $x_t$ in $\mathbb{X}$.
+To apply MH to sampling from some distribution $\pi$, we need to pick a (usually, relative to $\pi$, very simple) distribution $q$, a _kernel_, with the same support as $\pi$. This kernel defines our exploration of the support $\mathbb{X}$. Specifically, at step $X_t = x_t$ in our Markov chain we use $q$ to choose a possible next step $\hat{x}_{t+1} \sim q[x_t]$. So $q$ can, and usually will, depend on the current position $x_t$ in $\mathbb{X}$.
 
-If our $\pi$ were for example defined over $\mathbb{X} = \mathbb{R}^2$, a possible candidate for $q$ would be a two-dimensional normal distribution centered around $x_t$. So at each step in Markov chain exploration of $\mathbb{X}$, we would draw $\hat{X}_{t+1} \sim \mathcal{N}[\mu = x_t, \sigma^2 = s^2]$ (with $s^2$ being in principle an arbitrary, but in practice a very important parameter to tune).
+If our $\pi$ were for example defined over $\mathbb{X} = \mathbb{R}^2$, a possible candidate for $q$ would be a two-dimensional normal distribution centered around $x_t$. So at each step in Markov chain exploration of $\mathbb{X}$, we would draw $\hat{x}_{t+1} \sim \mathcal{N}[\mu = x_t, \sigma^2 = s^2]$ (with $s^2$ being in principle an arbitrary, but in practice a very important parameter to tune).
 
 If we were to simply always take this proposed step $\hat{x}_{t+1}$ drawn from $q$ then the result would be a random walk through $\mathbb{X}$ entirely independent from our target distribution $\pi$. With the goal of course being to obtain a series of samples from $\pi$, this would of course not be of much use.
 
@@ -66,13 +66,13 @@ The second part to every sampling step in the MH algorithm is to decide whether 
 
 $$
 \begin{align*}
-X_{t+1} & = \begin{cases}
-    \hat{x}_{t+1} & \text{ if } U \le \alpha \\
+x_{t+1} & = \begin{cases}
+    \hat{x}_{t+1} & \text{ if } u \le \alpha \\
             x_{t} & \text{ otherwise }
             \end{cases} \\
 
 \alpha & = \frac{\pi(\hat{x}_{t+1})}{\pi(x_t)} \frac{q(x_t | \hat{x}_{t+1})}{q(\hat{x}_{t+1} | x_t)} \\
-U & \sim \mathcal{U}[0,1]
+u & \sim \mathcal{U}[0,1]
 \end{align*}
 $$
 
@@ -185,7 +185,7 @@ fn example4(steps : u64, end_pos : f64) -> f64 {
 
 ### Condition Statement
 
-While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard condition on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary boolean expression evaluates to $\text{true}$, and if it doesn't, the likelihood of the whole execution is set to $0$. Otherwise, it does nothing.
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary boolean expression evaluates to $\text{true}$, and if it doesn't, the likelihood of the whole execution is set to $0$. Otherwise, it does nothing.
 
 Just like with the observe statment, the condition statement doesn't interfer at all with the regular execution of the program, but rather only affects the calculation of the total likelihood. So in the end, even if the expression inside a condition statement evaluates to $\text{false}$, the function will continue as normal and still return a value as normal, but the associated likelihood is $0$.
 
@@ -193,7 +193,7 @@ In fact, the effect of a condition statement is no different from an observe sta
 
 It should be noted however, that, whenever possible, we should try to soften any hard conditions in our program to observes, to allow for executions that don't quite satisfy our constraints to have non-zero likelihood. Otherwise, there is no way for the inference algorithm to know whether a sample from the program has a likelihood of 0 because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
 
-In the following we will only concern ourselves with sample expressions and observe statements, with condition statements being simply a particular kind of observe statement.
+In the following we will only concern ourselves with sample expressions and observe statements, since condition statements are just a particular kind of observe statement.
 
 
 ```rs
@@ -231,7 +231,7 @@ And that is not even enough to directly apply the Metropolis Hastings (MH) algor
 
 However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. That is, if rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total likelihood of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total likelihood for this execution, but for a _trace_ of predetermined values.
 
-So a trace of a probabilistic program is simply some representation of all the evaluations of sample expressions that are encountered during some particular possible execution of the program. This trace can contain a different number of entries for different executions, if for example the number of times a sample expression inside a loop is encountered depends on a previous sample expression. And it can also be that the n-th sample expression we encounter during some execution is completely different from the n-th one we encounter during a different execution, if for example we were to sample from a normal distribution in one branch of an `if` and from a Bernoulli distribution in the other. So "picking" some actually possible trace for a probabilistic program at hand is not straightforward. And even if we have a possible trace, were we to make any changes to it, there is no certainty that the modified trace still represents a possible execution of the program.
+So a trace of a probabilistic program is simply some representation of all the evaluations of sample expressions that are encountered during some particular possible execution of the program. This trace can contain a different number of entries for different executions, if for example the number of times a sample expression inside a loop is encountered depends on a previous sample expression. And it can also be that the n-th sample expression we encounter during some execution is completely different from the n-th one we encounter during a different execution, if for example we were to sample from a normal distribution in one branch of an `if` and from a Bernoulli distribution in the other. So "picking" some actually valid trace for a probabilistic program at hand is not straightforward. And even if we have a valid trace, were we to make any changes to it, there is no certainty that the modified trace still represents a possible execution of the program.
 
 ```rs
 /// Depending on how many times we drawn a `false` from
@@ -266,7 +266,7 @@ fn example7() -> f64 {
 }
 ```
 
-We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution.
+We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution. A trace that fully determines the execution of our probabilistic program we will call a _valid_ trace.
 
 Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters. In this case, we can still deterministically use the value from the trace, but have to re-evaluate the likelihood under the new parameters.
 
@@ -313,7 +313,7 @@ A node $L(n,t)$ represents an iteration $n$ of a loop and it's correspoding sub-
 A node $F(i, t)$ represents a sample expression sampling from another probabilistic program identified by $i$, and the corresponding sub-trace $t$.\
 And a node $P(d,p,v)$ represents a sample expression sampling from a primitive distribution $d$ with parameters $p$, and the sampled value $v$.
 
-We define the semi-deterministic evaluation of a probabilistic program $f$ for a given trace $t$ as follows:
+We define the semi-deterministic evaluation $sdeval(f,t)$ of a probabilistic program $f$ for a given trace $t$ as follows:
 
 ```
 Execute f as normal.
@@ -348,7 +348,33 @@ Return the resulting value, the calulated total likelihood and the updated trace
 
 ## Inference
 
+To generate samples from the distribution represented by a probabilistic program $f$, we will apply the Metropolis Hastings (MH) algorithm. Instead of taking the support of the distribution itself as the space $\mathbb{X}$ to explore, we will instead explore the space of traces of $f$, since we can for any given trace $t$ evaluate it's likelihood, whereas we can not do the same for some given value from the support of the distribution represented by $f$.
 
+We define therefore $\mathbb{X} := T$, the space of all probabilistic program traces, and $\pi(t) := sdeval(f,t)$, the semi-deterministic evaluation of $f$ for a given trace $t$ (implicitly taking $sdeval$ here to only be returning the calculated likelihood). $\pi(t)$ will therefore be non-zero for any trace $t$ that does not determine an impossible value for any of the primitive distributions recorded in it, and neither results in any observe statements in $f$ evaluating to a likelihood of $0$. However, $t$ does not have to necessarily be a possible trace for $f$, as discussed in the prior section.
+
+As the kernel $q$ we could principally come up with any scheme that proposes a new trace $\hat{t}_{t+1}$ given the current trace $t_t$, as long as we can evaluate the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$ to calculate the MH acceptance ratio. We will take here perhaps simplest choice for $q$, a kernel where we simply pick some primitive distribution in the current trace and pick a new value for it, leaving the rest of the trace as is. We will do so randomly and "flat-uniformly", meaning that any primitive distribution appearing in the trace is equally likely, no matter where in the tree structure it is. Though different design choices could be made in this regard.
+
+One advantage of picking such a simple kernel is that $q(t_t | \hat{t}_{t+1})$ and $q(\hat{t}_{t+1} | t_t)$ both reduce to rather simple calculations. We can factor $q$ like this:
+
+$$
+q(t' | t) = k(v' | d, p, v) \, c(P(d, p, v) | t)
+$$ 
+
+Here $c(P(d,p,v) | t)$ is the likelihood of choosing the primitive distribution entry $P(d,p,v)$ and $k(v' | d(p), v)$ is the likelihood of picking the posterior value $v'$ for the primitive distribution $d(p)$ given the prior value $v$.
+
+For our simple kernel, we choose the primitive entry $P(d,p,v)$ flat-uniformly, so we have $c(P(d,p,v) | t) = \frac{1}{\text{number of } P \text{ in } t'}$, which the same for $q(t_t | \hat{t}_{t+1})$ and $q(\hat{t}_{t+1} | t_t)$ and so cancels out in the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$. 
+
+How we pick a new value $\hat{v}_{t+1}$ for some primitive entry $P(d,p,v_t)$ in our trace is once again a design choice to be made. We could simply draw a new sample from the distribution, independent from the prior value $v$, but we also could come up with a local kernel $q_{d(p)}[v]$ for some or all of our primitive distributions that picks the value in some way dependent on the prior value $v$. For example for a distribution $d(p)$ defined on $\mathbb{R}$, we could take as it's local kernel a normal distribution centered around the prior value, $q_{d(p)}[v] := \mathcal{N}[\mu = v, \sigma^2 = s^2]$ (for some choice of $s^2$). For the sake of generality we will from here on assume that for every primitive distribution $d(p)$ some local kernel $q_{d(p)}[v]$ has been defined, which might or might not depend on $v$ and could just be the distribution $d(p)$ itself.
+
+With that, we get for some choice of primitive entry $P(d,p,v_t)$ in $t_t$ and proposal value $\hat{v}_{t+1} \sim q_{d(p)}[v_t]$:
+
+$$
+\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)} = \frac{q_{d(p)}(v_t | \hat{v}_{t+1})}{q_{d(p)}(\hat{v}_{t+1} | v_t)}
+$$
+
+A final detail that remains to be considered before we can confidently apply MH is the problem that a modified proposal trace $\hat{t}_{t+1}$ might not be a valid trace of $f$ and therefore the semi-deterministic evaluation $sdeval(f,t)$ could be, well, not deterministic, producing a corrected proposal trace ${\hat{t}'}_{t+1}$. However, since by the definition of $sdeval$, **TODO**
+
+With all prerequisites for MH satisfied, we can apply the algorithm and explore our trace space $\mathbb{X}$ to generate traces of $f$ that converge to being representative of the distribution of traces $\pi(t)$.
 
 
 ## Embedding into Rust
