@@ -80,7 +80,7 @@ The value $\alpha$ defined here is called the _acceptance ratio_. If $\alpha$ is
 
 If on the other hand $\alpha$ is greater than or equal to $1$, which would be the case if $\pi(\hat{x}_{t+1}) \ge {\pi(x_t)}$ (assuming a symetric kernel $q$ for which the second right fraction cancels out), then we will definitely take the proposed step, since $P(U \le 1) = 1$. So our Markov chain will always step to values that are more likely under $\pi$ than the current value.
 
-For any $\alpha$ between $0$ and $1$, we will sometimes take the proposed step and sometimes will not, depending on what value is drawn for $U$. So we can still step "back down" to values that are less likely than the current value, but this is increasingly unlikely the smaller the ratio between the likelyhood under $\pi$ of the value after a proposed step and the current value. As a result, we will generally tend towards sampling from regions of high likelihood under $\pi$, while also in the long run exploring regions of lower (positive) likelihood.
+For any $\alpha$ between $0$ and $1$, we will sometimes take the proposed step and sometimes will not, depending on what value is drawn for $U$. So we can still step "back down" to values that are less likely than the current value, but this is increasingly unlikely the smaller the ratio between the likelyhood under $\pi$ of the value after a proposed step and the current value. As a result, we will generally tend towards sampling from regions of high probablity under $\pi$, while also in the long run exploring regions of lower (positive) probablity.
 
 And under some assumptions about the target distribution $\pi$ and the kernel $q$ it is possible to rigorously prove that, at least in the limit, the Markov chain of samples generated as such will converge to being a sequence of (dependent) samples from $\pi$.
 
@@ -146,7 +146,7 @@ fn example2(n : u64) -> u64 {
 
 ### Observe Statement
 
-The other special kind of expression we can use in a probabilistic program is an `observe` statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution. We essentially say that "we know that this value is the result of sampling from this distribution", which might or might not be likely, correspondingly affecting the likelihood of the final value resulting from the probabilistic program as a whole. 
+The other special kind of expression we can use in a probabilistic program is an `observe` statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution. We essentially say that "we know that this value is the result of sampling from this distribution", which might or might not be likely, correspondingly affecting the probablity of the final value resulting from the probabilistic program as a whole. 
 
 Neither the value we are observing, nor any parameters to the distribution have to be constant. They can result from any arbitrary combination of ordinary and probabilistic computations. However, we can not observe values from a distribution defined by another probabilistic program, only from primitive distributions.
 
@@ -185,13 +185,13 @@ fn example4(steps : u64, end_pos : f64) -> f64 {
 
 ### Condition Statement
 
-While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary boolean expression evaluates to $\text{true}$, and if it doesn't, the likelihood of the whole execution is set to $0$. Otherwise, it does nothing.
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary boolean expression evaluates to $\text{true}$, and if it doesn't, the probablity of the whole execution is set to $0$. Otherwise, it does nothing.
 
-Just like with the observe statment, the condition statement doesn't interfer at all with the regular execution of the program, but rather only affects the calculation of the total likelihood. So in the end, even if the expression inside a condition statement evaluates to $\text{false}$, the function will continue as normal and still return a value as normal, but the associated likelihood is $0$.
+Just like with the observe statment, the condition statement doesn't interfer at all with the regular execution of the program, but rather only affects the calculation of the total probablity. So in the end, even if the expression inside a condition statement evaluates to $\text{false}$, the function will continue as normal and still return a value as normal, but the associated probablity is $0$.
 
-In fact, the effect of a condition statement is no different from an observe statement with the value of the boolean expression being observed from a distribution from which we sample the value $\text{true}$ with a likelihood of $1$, like for example a Bernoulli distribution $\text{Bern}(p)$ with a parameter of $p=1$. However, in pratice, both for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
+In fact, the effect of a condition statement is no different from an observe statement with the value of the boolean expression being observed from a distribution from which we sample the value $\text{true}$ with a probablity of $1$, like for example a Bernoulli distribution $\text{Bern}(p)$ with a parameter of $p=1$. However, in pratice, both for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
 
-It should be noted however, that, whenever possible, we should try to soften any hard conditions in our program to observes, to allow for executions that don't quite satisfy our constraints to have non-zero likelihood. Otherwise, there is no way for the inference algorithm to know whether a sample from the program has a likelihood of 0 because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
+It should be noted however, that, whenever possible, we should try to soften any hard conditions in our program to observes, to allow for executions that don't quite satisfy our constraints to have non-zero probablity. Otherwise, there is no way for the inference algorithm to know whether a sample from the program has a probablity of 0 because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
 
 In the following we will only concern ourselves with sample expressions and observe statements, since condition statements are just a particular kind of observe statement.
 
@@ -225,11 +225,11 @@ fn condition(c : bool) {
 
 ## Trace Space
 
-If our probabilistic program only contains sample expressions and no observe (or condition) statements, drawing samples from the distribution represented by it is as simple as just running the program as normal. However, if we were to do the same with a program that does contain observe statements, we would get samples that do not represent the actual distribution described by the program. We could even get samples with a likelihood of $0$, simply by the execution resulting in that sample containing observe statement that are impossible. In general, a probabilistic program with observe statements does not directly function as a sampler for the distribution it represents. All it does is to produce random values and correctly calculate the likelihood of these values.
+If our probabilistic program only contains sample expressions and no observe (or condition) statements, drawing samples from the distribution represented by it is as simple as just running the program as normal. However, if we were to do the same with a program that does contain observe statements, we would get samples that do not represent the actual distribution described by the program. We could even get samples with a probablity of $0$, simply by the execution resulting in that sample containing observe statement that are impossible. In general, a probabilistic program with observe statements does not directly function as a sampler for the distribution it represents. All it does is to produce random values and correctly calculate the probablity of these values.
 
-And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from out program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the likelihood of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask the program how likely it would have been for it to return this value.
+And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from out program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the probablity of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask the program how likely it would have been for it to return this value.
 
-However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. That is, if rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total likelihood of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total likelihood for this execution, but for a _trace_ of predetermined values.
+However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. That is, if rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total probablity of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total probablity for this execution, but for a _trace_ of predetermined values.
 
 So a trace of a probabilistic program is simply some representation of all the evaluations of sample expressions that are encountered during some particular possible execution of the program. This trace can contain a different number of entries for different executions, if for example the number of times a sample expression inside a loop is encountered depends on a previous sample expression. And it can also be that the n-th sample expression we encounter during some execution is completely different from the n-th one we encounter during a different execution, if for example we were to sample from a normal distribution in one branch of an `if` and from a Bernoulli distribution in the other. So "picking" some actually valid trace for a probabilistic program at hand is not straightforward. And even if we have a valid trace, were we to make any changes to it, there is no certainty that the modified trace still represents a possible execution of the program.
 
@@ -266,9 +266,9 @@ fn example7() -> f64 {
 }
 ```
 
-We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution. A trace that fully determines the execution of our probabilistic program we will call a _valid_ trace.
+We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution. A trace that fully determines the execution of our probabilistic program we will call a _valid_ trace. It might contain unused entries, but it at least has to contain an entry for every sample expression encountered.
 
-Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters. In this case, we can still deterministically use the value from the trace, but have to re-evaluate the likelihood under the new parameters.
+Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters. In this case, we can still deterministically use the value from the trace, but have to re-evaluate the probablity under the new parameters.
 
 ```rs
 /// Depending on the value sampled from the uniform distribution
@@ -331,53 +331,85 @@ Every time a sample expression would be evaluated, do instead:
         (2) If it doesn't, create a new one and attach it to t
         (3) Semi-deterministically evaluate g for the subtrace
         (4) Update the subtrace to the one generated by g
-        (5) Multiply the calculated likelihood from g onto the total likelihood
+        (5) Multiply the calculated probablity from g onto the total probablity
     - If it's sampling a primitive distribution d with parameters p:
         (1) Look in t whether an entry for d exists
-        (2) If it doesn't, sample from d(p) as normal and add an entry to t
+        (2) If it doesn't, sample from d[p] as normal and add an entry to t
         (3) If it does:
             - Take the value from entry
             - If the parameters from the entry differ from p, update the entry
-        (4) Calculate likelihood and multiply onto total likelihood
+        (4) Calculate probablity and multiply onto total probablity
 Every time an observe statement would be evaluated, do instead:
-    - Calculate the likelihood of the value coming from the distribution
-    - Multiply this likelihood onto the total likelihood
-Return the resulting value, the calulated total likelihood and the updated trace
+    - Calculate the probablity of the value coming from the distribution
+    - Multiply this probablity onto the total probablity
+Return the resulting value, the calulated total probablity and the updated trace
 ```
 
 
 ## Inference
 
-To generate samples from the distribution represented by a probabilistic program $f$, we will apply the Metropolis Hastings (MH) algorithm. Instead of taking the support of the distribution itself as the space $\mathbb{X}$ to explore, we will instead explore the space of traces of $f$, since we can for any given trace $t$ evaluate it's likelihood, whereas we can not do the same for some given value from the support of the distribution represented by $f$.
+To generate samples from the distribution represented by a probabilistic program $f$, we apply the Metropolis Hastings (MH) algorithm. However, instead of taking the support of the distribution itself as the space $\mathbb{X}$ to explore, we instead explore the space of valid traces of $f$, since we can for any given trace $t$ evaluate it's probablity with $sdeval(f,t)$, whereas we can not do the same for some given value from the support of the distribution represented by $f$.
 
-We define therefore $\mathbb{X} := T$, the space of all probabilistic program traces, and $\pi(t) := sdeval(f,t)$, the semi-deterministic evaluation of $f$ for a given trace $t$ (implicitly taking $sdeval$ here to only be returning the calculated likelihood). $\pi(t)$ will therefore be non-zero for any trace $t$ that does not determine an impossible value for any of the primitive distributions recorded in it, and neither results in any observe statements in $f$ evaluating to a likelihood of $0$. However, $t$ does not have to necessarily be a possible trace for $f$, as discussed in the prior section.
+We define therefore $\mathbb{X} := T_{f,\text{valid}}$, the space of all valid probabilistic program traces for $f$, and $\tilde{\pi}(t) := sdeval(f,t)$, the semi-deterministic evaluation of $f$ for a given trace $t$ (implicitly taking $sdeval$ here to only be returning the calculated probablity). Though since we are restricting our space to only valid traces of $f$, the evaluation with $sdeval$ is fully deterministic. $\tilde{\pi}(t)$ is therefore non-zero for any valid trace $t$ of $f$ that does not determine an impossible value for any of the primitive distributions recorded in it, and neither results in any observe statements in $f$ evaluating to a probablity of $0$.
 
-As the kernel $q$ we could principally come up with any scheme that proposes a new trace $\hat{t}_{t+1}$ given the current trace $t_t$, as long as we can evaluate the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$ to calculate the MH acceptance ratio. We will take here perhaps simplest choice for $q$, a kernel where we simply pick some primitive distribution in the current trace and pick a new value for it, leaving the rest of the trace as is. We will do so randomly and "flat-uniformly", meaning that any primitive distribution appearing in the trace is equally likely, no matter where in the tree structure it is. Though different design choices could be made in this regard.
+
+
+As the kernel $q$ we could come up with any scheme that proposes a new trace $t'$ given a prior trace $t$, as long as we can evaluate the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$ to calculate the MH acceptance ratio. We take here perhaps simplest choice for $q$, a kernel where we randomly pick one primitive distribution in the current trace and pick a new value for it, leaving the rest of the trace as is. We do so "flat-uniformly", meaning that any primitive distribution appearing in the trace is equally likely, no matter where in the tree structure it is. Though different design choices could be made in this regard.
+
+Picking a new value $v'$ for some primitive entry $P(d,p,v)$ could also be done in many ways. We could simply draw a new sample from the distribution $d[p]$, independent from the prior value $v$, but we also could come up with a local kernel $q_{d[p]}[v]$ for some or all of our primitive distributions that picks the value in some way dependent on the prior value $v$. For example for a distribution $d[p]$ defined on $\mathbb{R}$, we could take as it's local kernel a normal distribution centered around the prior value, $q_{d[p]}[v] := \mathcal{N}[\mu = v, \sigma^2 = s^2]$ (for some choice of $s^2$). For the sake of generality we assume from here on that for every primitive distribution $d[p]$ some local kernel $q_{d[p]}[v]$ has been defined, which might or might not depend on $v$ and could just be the distribution $d[p]$ itself.
+
+Formally, we define the procedure for the kernel $q[t]$:
+
+- Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
+- Sample a proposal $v' \sim q_{d[p]}[v]$
+- Define $\tau'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
+- Evaluate $sdeval(f,\tau')$ to get the valid proposal trace $t'$
+- Return $t'$
+
+The probablity of picking a particular entry $P(d,p,v)$ in $t$ is $\frac{1}{N}$ where $N$ is the number of primitive entries in $t$.
+
+The probablity of picking a particular new value $v'$ for $P(d,p,v)$ is $q_{d[p]}(v' | v)$.
+
+The probablity of $sdeval(f,\tau')$ evaluating to $t'$ isn't quite so straightforward however, since $\tau'$ is not necessarily a valid trace of $f$, and therefore $sdeval(f,\tau')$ might non-deterministically result in one of a distribution of possible valid traces $t'$.
+
+To analyze the probablity $p(sdeval(f, \tau') = t')$, we split the trace of $t'$ into two parts: $s_\le$, and $s_>$. $s_\le$ contains all primitive trace entries encountered before and including the sample expression that is determined by $P(d,p,v)$. $s_>$ contains all remaining entries.
+
+Since $t$ is a valid trace and $\tau'$ is equal to $t$ except for the entry $P(d,p,v)$, the evaluation $sdeval(f, \tau')$ is deterministic up to and including the point the sample expression determined by $P(d,p,v)$ is encountered. Consequently $p(s_\le) = 1$. After this point, $sdeval(f, \tau')$ might become non-deterministic.
+
+Since $\tilde{\pi}(t') = sdeval(f, t')$, and 
+
+**????????????????????????????????????????????????????????????????**
+
 
 One advantage of picking such a simple kernel is that $q(t_t | \hat{t}_{t+1})$ and $q(\hat{t}_{t+1} | t_t)$ both reduce to rather simple calculations. We can factor $q$ like this:
 
 $$
-q(t' | t) = k(v' | d, p, v) \, c(P(d, p, v) | t)
+q(t' | t) = k(v' | d[p], v) \, c(P(d, p, v) | t)
 $$ 
 
-Here $c(P(d,p,v) | t)$ is the likelihood of choosing the primitive distribution entry $P(d,p,v)$ and $k(v' | d(p), v)$ is the likelihood of picking the posterior value $v'$ for the primitive distribution $d(p)$ given the prior value $v$.
+Here $c(P(d,p,v) | t)$ is the probablity of choosing the primitive distribution entry $P(d,p,v)$ and $k(v' | d[p], v)$ is the probablity of picking the posterior value $v'$ for the primitive distribution $d[p]$ given the prior value $v$.
 
 For our simple kernel, we choose the primitive entry $P(d,p,v)$ flat-uniformly, so we have $c(P(d,p,v) | t) = \frac{1}{\text{number of } P \text{ in } t'}$, which the same for $q(t_t | \hat{t}_{t+1})$ and $q(\hat{t}_{t+1} | t_t)$ and so cancels out in the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$. 
 
-How we pick a new value $\hat{v}_{t+1}$ for some primitive entry $P(d,p,v_t)$ in our trace is once again a design choice to be made. We could simply draw a new sample from the distribution, independent from the prior value $v$, but we also could come up with a local kernel $q_{d(p)}[v]$ for some or all of our primitive distributions that picks the value in some way dependent on the prior value $v$. For example for a distribution $d(p)$ defined on $\mathbb{R}$, we could take as it's local kernel a normal distribution centered around the prior value, $q_{d(p)}[v] := \mathcal{N}[\mu = v, \sigma^2 = s^2]$ (for some choice of $s^2$). For the sake of generality we will from here on assume that for every primitive distribution $d(p)$ some local kernel $q_{d(p)}[v]$ has been defined, which might or might not depend on $v$ and could just be the distribution $d(p)$ itself.
+A final detail that remains to be considered before we can apply MH is the problem that a given proposal trace $\hat{t}_{t+1}$ might not be a valid trace of $f$ and therefore the semi-deterministic evaluation $sdeval(f,t)$ could be non-deterministic, producing a random corrected trace ${\hat{t}'}_{t+1}$ from a distribution of possible valid traces. However, since we only modified one entry $P(d,p,v)$ in $t_t$ to get $\hat{t}_{t+1}$, the execution of $f$ up to the sample expression that is determined by $P(d,p,v)$ is the same for $t_t$ and $\hat{t}_{t+1}$, and therefore fully deterministic. As a result, ${\hat{t}'}_{t+1}$ can only differ from 
 
-With that, we get for some choice of primitive entry $P(d,p,v_t)$ in $t_t$ and proposal value $\hat{v}_{t+1} \sim q_{d(p)}[v_t]$:
+With that, we get for some flat-uniformly chosen primitive entry $P(d,p,v_t)$ in $t_t$ and proposal value $\hat{v}_{t+1} \sim q_{d[p]}[v_t]$:
 
 $$
-\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)} = \frac{q_{d(p)}(v_t | \hat{v}_{t+1})}{q_{d(p)}(\hat{v}_{t+1} | v_t)}
+\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)} = \frac{q_{d[p]}(v_t | \hat{v}_{t+1})}{q_{d[p]}(\hat{v}_{t+1} | v_t)}
 $$
-
-A final detail that remains to be considered before we can confidently apply MH is the problem that a modified proposal trace $\hat{t}_{t+1}$ might not be a valid trace of $f$ and therefore the semi-deterministic evaluation $sdeval(f,t)$ could be, well, not deterministic, producing a corrected proposal trace ${\hat{t}'}_{t+1}$. However, since by the definition of $sdeval$, **TODO**
 
 With all prerequisites for MH satisfied, we can apply the algorithm and explore our trace space $\mathbb{X}$ to generate traces of $f$ that converge to being representative of the distribution of traces $\pi(t)$.
 
 
 ## Embedding into Rust
+
+Instead of defining an entirely new language to write our probabilistic programs in, we embed our probabilistic programs as functions in the pre-existing imperative programming language Rust, allowing us to use any pre-existing features and libraries of Rust in our probabilistic programs. By making use of the powerful macro system of Rust, we can automatically transform any probabilistic program $f$ we write into an ordinary Rust function $f'(t) = sdeval(f,t)$ that can be compiled and run as usual.
+
+The programming language Rust contains two macro systems, however we only use here the more general of the two, "procedual macros". A procedual macro in Rust is an ordinary Rust function which takes a stream of Rust tokens as input and produces a stream of Rust tokens as output. How we transform the input tokens into the output tokens can be defined arbitrarily, utilizing any ordinary data types, functions, libraries, etc. Procedual macros are further divided into "function-like macros", "attribute macros" and "derive macros". We only use here the former two kinds.
+
+
+
 
 ## Examples
 
