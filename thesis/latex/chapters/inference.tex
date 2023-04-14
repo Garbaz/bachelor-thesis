@@ -1,0 +1,48 @@
+To generate samples from the distribution represented by a probabilistic program $f$, we apply the Metropolis Hastings (MH) algorithm. Instead of taking the support of the distribution itself as the space $\mathbb{X}$ to explore, we explore the space of valid traces of $f$, since we can for any given trace $t$ evaluate it's probablity with $sdeval(f,t)$, whereas we can not do the same for some given value from the support of the distribution represented by $f$.
+
+We define therefore $\mathbb{X} := T_{f,\text{valid}}$, the space of all valid probabilistic program traces for $f$, and $\tilde{\pi}(t) := sdeval(f,t)$, the semi-deterministic evaluation of $f$ for a given trace $t$ (implicitly taking $sdeval$ here to only be returning the calculated probablity). Though since we are restricting our space to only valid traces of $f$, the evaluation with $sdeval$ is fully deterministic. $\tilde{\pi}(t)$ is therefore non-zero for any valid trace $t$ of $f$ that does not determine an impossible value for any of the primitive distributions recorded in it and neither results in any observe statements in $f$ evaluating to a probablity of $0$.
+
+As the kernel $q$ we could take any scheme that proposes a new trace $t'$ given a prior trace $t$, as long as we can evaluate the fraction $\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)}$ for it to calculate the MH acceptance ratio. We take here perhaps simplest choice for $q$, a kernel where we randomly pick one primitive entry in the current trace and pick a new value for it, leaving the rest of the trace as is. We do so "flat-uniformly", meaning that any primitive distribution appearing in the trace is equally likely, no matter where in the tree structure it is. Though different design choices could be made in this regard.
+
+How we pick a new value $v'$ for some primitive entry $P(d,p,v)$ can also be done in any of many ways. We could simply draw a new sample from the distribution $d[p]$, independent from the prior value $v$. But we also could come up with a more informed local kernel $q_{d[p]}[v]$ for a primitive distribution, picking the new value in some way dependent on the prior value $v$. For example for a distribution $d[p]$ defined on $\mathbb{R}$, we could take as it's local kernel a normal distribution centered around the prior value, $q_{d[p]}[v] := \mathcal{N}[\mu = v, \sigma^2 = s^2]$ (for some choice of $s^2$). For the sake of generality we assume from here that for every primitive distribution $d[p]$ some local kernel $q_{d[p]}[v]$ has been defined, which might or might not depend on $v$ and could just be the distribution $d[p]$ itself.
+
+Formally, we define the procedure for the kernel $q[t]$:
+
+- Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
+- Sample a proposal value $v' \sim q_{d[p]}[v]$
+- Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
+- Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
+- Return $t'$
+
+One advantage of picking such a simple kernel is that the kernel part in the acceptance ration reduces to a rather simple calculation \cite{wingate2011lightweight}:
+
+\begin{equation*}
+\frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)} = \frac{q_{d[p]}(v_t | \hat{v}_{t+1})}{q_{d[p]}(\hat{v}_{t+1} | v_t)}
+\end{equation*}
+
+
+So in total, for a flat-uniformly chosen primitive entry $P(d,p,v_t)$ in $t_t$ and proposal value $\hat{v}_{t+1} \sim q_{d[p]}[v_t]$, the acceptance ratio for our MH algorithm is:
+
+\begin{equation*}
+\alpha = \frac{\tilde{\pi}(\hat{t}_{t+1})}{\tilde{\pi}(t_t)} \frac{q(t_t | \hat{t}_{t+1})}{q(\hat{t}_{t+1} | t_t)} = \frac{sdeval(f, \hat{t}_{t+1})}{sdeval(f, t_t)} \frac{q_{d[p]}(v_t | \hat{v}_{t+1})}{q_{d[p]}(\hat{v}_{t+1} | v_t)}
+\end{equation*}
+
+If we make sure to keep the result of $sdeval(f, t_t)$ stored between steps, this means that for every MH iteration we have to only evaluate the expensive computation $sdeval(f, \cdot)$ once.
+
+With all prerequisites of MH satisfied, we can apply the algorithm and explore our trace space $\mathbb{X}$ to generate a Markov chain of traces of $f$ that converge to being representative of the distribution of traces $\pi$ as defined by the semantics of our probabilistic program.
+
+Since with the evaluation of $sdeval(f,t)$ for some trace $t$ we not just get the probability and updated trace, but also the respective return value of the probablistic program $f$, if we discard the traces and only keep the return values, we get the desired sampling procedure for the distribution defined by $f$.
+
+In total, the MH procedure to sample from the distribution defined by some probabilistic program $f$ looks as follows:
+
+- Initialize our trace $t := sdeval(f,\emptyset)$
+- Repeat forever:
+  - Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
+  - Sample a proposal value $v' \sim q_{d[p]}[v]$
+  - Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
+  - Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
+  - Clean out any unusued entries in $t'$
+  - Calculate the acceptance ration $\alpha$ as described above
+  - Sample $u \sim \mathcal{U}[0,1]$
+  - If $u < \alpha$ then $t := t'$
+  - Yield the return value associated with $t$ as a sample

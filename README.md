@@ -1,4 +1,4 @@
-# Embedded probabilistic programming in Rust
+# Embedded Probabilistic Programming in Rust
 
 The code of this project is at [**Garbaz/probprog**](https://github.com/Garbaz/probprog)
 

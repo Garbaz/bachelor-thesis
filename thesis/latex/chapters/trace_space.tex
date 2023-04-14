@@ -1,0 +1,124 @@
+If our probabilistic program only contains sample expressions and no observe (or condition) statements, drawing samples from the distribution represented by it is as simple as just running the program as normal. However, if we were to do the same with a program that does contain observe statements, we would get samples that do not represent the actual distribution described by the program. We could even get samples with a probablity of $0$, simply by the execution resulting in that sample containing observe statement that are impossible. In general, a probabilistic program with observe statements does not directly function as a sampler for the distribution it represents. All it does is to produce random values and correctly calculate the probablity of these values.
+
+And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from out program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the probablity of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask the program how likely it would have been for it to return this value.
+
+However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. That is, if rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total probablity of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total probablity for this execution, but for a \textit{trace} of predetermined values.
+
+So a trace of a probabilistic program is simply some representation of all the evaluations of sample expressions that are encountered during some particular possible execution of the program. This trace can contain a different number of entries for different executions, if for example the number of times a sample expression inside a loop is encountered depends on a previous sample expression. And it can also be that the n-th sample expression we encounter during some execution is completely different from the n-th one we encounter during a different execution, if for example we were to sample from a normal distribution in one branch of an `if` and from a Bernoulli distribution in the other. So "picking" some actually valid trace for a probabilistic program at hand is not straightforward. And even if we have a valid trace, were we to make any changes to it, there is no certainty that the modified trace still represents a possible execution of the program.
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+/// Depending on how many times we drawn a `false` from
+/// the Bernoulli distribution, a different number of sample
+/// expressions is encountered during an execution.
+#[prob]
+fn example6(p : f64) -> usize {
+    if sample!(bernoulli(p)) {
+        0
+    } else {
+        1 + sample!(example6(p))
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+/// Depending on whether we sample `true` or `false` from the
+/// Bernoulli distribution, the second sample expression we
+/// encounter could either be to again sample from a Bernoulli
+/// distribution or to sample from a normal distribution. 
+#[prob]
+fn example7() -> f64 {
+    if sample!(bernoulli(0.1)) {
+        if sample!(bernoulli(0.5)) {
+            1.
+        } else {
+            -1.
+        }
+    } else {
+        sample!(normal(0., 1.))
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or end up unused. So every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if we were executing the program without any predetermined trace. Once the partially deterministic execution has completed, we clean out any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution. A trace that fully determines the execution of our probabilistic program we will call a \textit{valid} trace. It might contain unused entries, but it at least has to contain an entry for every sample expression encountered.
+
+Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters. In this case, we can still deterministically use the value from the trace, but have to re-evaluate the probablity under the new parameters.
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+/// Depending on the value sampled from the uniform distribution
+/// the parameters for the normal distribution differ.
+#[prob]
+fn example8(m : f64) -> f64 {
+    let s = sample!(uniform(0., 10.));
+    sample!(normal(m, s))
+}
+\end{lstlisting}
+\end{minipage}
+
+We can mostly treat sample expressions that sample from other probabilistic programs the same as ones that sample from primitive distributions. However rather than our trace containing a predetermined resulting value for the sub-program, it contains a predetermined sub-trace for it. We simply semi-deterministically run the sub-program on this sub-trace, possibly updating it along the way, just as we are doing for the main program.
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+#[prob]
+fn flip() -> bool {
+    sample!(bernoulli(0.5))
+}
+
+/// A probabilistic program that samples from another 
+/// probabilistic program. One possible trace for this
+/// program would look something like this:
+///   +- (uniform, (0., 10.), 1.2345)
+///   +--+ "flip"
+///   |  +- (bernoulli, (0.5), true)
+///   +- (normal, (0., 1.), -0.6789)
+#[prob]
+fn example9() -> f64 {
+    let x = sample!(uniform(0., 10.));
+    let y = if sample!(flip()) {
+        sample!(normal(0., 1.))
+    } else {
+        sample!(uniform(-1., 1.))
+    }
+    x + y
+}
+\end{lstlisting}
+\end{minipage}
+
+Since the number of times any sample expressions appearing inside loops in our probabilistic program are encountered can depend on the value of prior sampling expressions, we will also alot for every iteration of a loop a sub-trace, such that the number of times a loop is executed does not affect whether or not the entry in the trace corresponding to any sample expressions appearing after to loop is found or missed.
+
+So formally, we define a trace as a tree $T := L(\mathbb{N_0}, T) | F(\mathbb{I}, T) | P(D,P,V)$. A node $L(n,t)$ represents an iteration $n$ of a loop and it's correspoding sub-trace $t$. A node $F(i, t)$ represents a sample expression sampling from another probabilistic program identified by $i$, and the corresponding sub-trace $t$. And a node $P(d,p,v)$ represents a sample expression sampling from a primitive distribution $d$ with parameters $p$, and the sampled value $v$.
+
+We define the semi-deterministic evaluation $sdeval(f,t)$ of a probabilistic program $f$ for a given trace $t$ as follows:
+
+- Execute f as normal, but ...
+  - ... every time any kind of loop expression would be evaluated, do instead:
+    - Initialize a counter c to 0
+    - For every iteration of the loop:
+      - Look in t whether a sub-trace for this iteration exists
+      - If it doesn't, create a new one and attach it to t
+      - Shadow t to be this sub-trace for the scope of this iteration
+      - Run the body of the loop as normal
+      - Increment the counter by 1
+  - ... every time a sample expression would be evaluated, do instead:
+    - If it's sampling another probabilistic program g:
+      - Look in t whether a sub-trace for g exists
+      - If it doesn't, create a new one and attach it to t
+      - Semi-deterministically evaluate g for the subtrace
+      - Update the subtrace to the one generated by g
+      - Multiply the calculated probablity from g onto the total probablity
+    - If it's sampling a primitive distribution d with parameters p:
+      - Look in t whether an entry for d exists
+      - If it doesn't, sample from d[p] as normal and add an entry to t
+      - If it does:
+        - Take the value from entry
+        - If the parameters from the entry differ from p, update the entry
+      - Calculate probablity and multiply onto total probablity
+  - ... every time an observe statement would be evaluated, do instead:
+    - Calculate the probablity of the value coming from the distribution
+    - Multiply this probablity onto the total probablity
+- Return the resulting value, the calulated total probablity and the updated trace

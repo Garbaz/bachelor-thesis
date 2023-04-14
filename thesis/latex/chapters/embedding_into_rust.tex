@@ -1,0 +1,67 @@
+The main challenge in implementing the scheme described above is how to evaluate $sdeval(f, t)$ for some probabilistic program $f$, since it requires us to be able to interfere with the execution of $f$ dependent on the trace $t$.
+
+One option would be to define a separate language for probabilistic programs and simply define evaluation for it to be $sdeval$. However, this would mean that any features we would like to use in writing probablistic programs, like common data structures and functions, would have to be reimplemented in, or at least manually exposed to, our new language.
+
+Another option would be to embed our probablistic programs in an existing programming language and build a new interpreter for the composite language that can differentiate between and handle both all ordinary features in the language and our probabilistic programs.
+
+The final option would be to take an existing programming language together with an existing interpreter or compiler for it, and just insert a step before compilation where we translate any probabilistic program $f$ in the code into an ordinary function $f'$, where $f'(t) = sdeval(f,t)$ for a trace $t$. This way we can utilize all the existing tooling and libraries that exist for the host language, and only have to concern ourselves with the translation.
+
+We implement here this final option for the compiled imperative programming language Rust. Thanks to Rust's integrated macro system, we can define the translation of probabilistic programs into ordinary functions without having to insert any additional compilation step. This way our implementation can exist as on ordinary library ("crate" in the Rust terminology), which can be imported and used like any other library.
+
+The part of the macro system of Rust that matters to us here are "procedual macros". A procedual macro is simply a function which takes a list of tokens as input and gives a list of tokens as output. In our case, we will define three macros, one "attribute macro" and two "function-like macros". The difference between these simply being that an attribute macro is applied by annotating it to an existing syntax component in the code, in our case a function definition, while a function-like macro is applied like a regular function.
+
+The attribute macro we define, which we shall call "prob", turns a probabilistic program $f$ into a function which returns a closure, which in turn captures all arguments to the original probabilistic program. This closure is the implementation of $sdeval(f,t)$, with the necessary code inserted to correctly handle the trace tree structure and hand back the resulting valid trace and it's probability.
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+/// A probabilistic program before translation
+#[prob]
+fn f(b : bool) -> u64 {
+    1729
+}
+
+/// And after translation by `prob`, with some details omitted
+fn f(b : bool) -> (impl Fn(&mut Trace) -> (u64, f64)) {
+    move |trace : &mut Trace| {
+        /* ... */
+        (1729, total_probability)
+    }
+}
+\end{lstlisting}
+\end{minipage}
+
+The special treatment of sample and observe statements is implemented by defining for each a function-like macro that expects the trace and total probability to already exist in the current context and adds to them accordingly.
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+// A sample expression
+sample!(uniform(0.,1.))
+
+// turns into a normal expression
+{
+    let (value, probability) = resample(uniform(0.,1.), trace);
+    total_probability *= probability;
+    value
+}
+\end{lstlisting}
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+// An observe statement
+observe!(bernoulli(0.5), true);
+
+// turns into a normal statement
+total_probability *= probability(bernoulli(0.5), true);
+\end{lstlisting}
+\end{minipage}
+
+The implementation of the Metropolis Hastings procedure can with this be simply defined to operate on any ordinary function that has the signature
+
+\begin{equation*}
+    Fn(\&mut Trace) \rightarrow (T, f64)
+\end{equation*}
+
+for some type $T$. Otherwise, it is a direct implementation.
+
+One detail to be noted about the actual implementation is that instead of operating on probabilities directly as indicated here, rather log probablities are used for their improved stability and performance.

@@ -1,0 +1,113 @@
+\documentclass[runningheads]{llncs}
+
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{fontspec}
+\usepackage{listings, listings-rust}
+\usepackage[skip=5pt plus1pt, indent=10pt]{parskip}
+
+\raggedbottom
+
+\setmonofont{Noto Sans Mono}[Scale=0.85]
+\lstset{language=Rust, basicstyle=\ttfamily, float, floatplacement=H}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+
+% \input{commands}
+
+% \makeatother
+
+% \input{unicode}
+
+\title{\includegraphics[width=0.4\textwidth]{logo.png}~ 
+\\[1cm]
+Embedded Probabilistic Programming in Rust}
+\titlerunning{Embedded Probabilistic Programming in Rust}
+\institute{Chair of Programming Languages, University of Freiburg \\ \email{garbaz@t-online.de}}
+\author{Tobias Hoffmann}
+
+
+\begin{document}
+
+\let\oldaddcontentsline\addcontentsline
+\def\addcontentsline#1#2#3{}
+\maketitle
+\def\addcontentsline#1#2#3{\oldaddcontentsline{#1}{#2}{#3}}
+
+
+\noindent\makebox[\linewidth]{\bf{Bachelor Thesis}}
+\\
+
+\noindent\makebox[\linewidth]{Examiner: Prof. Dr. Peter Thiemann}
+\noindent\makebox[\linewidth]{Advisor: Hannes Saffrich}
+
+% \input{SystemF}
+% \input{SystemFo}
+% \input{DictionaryPassingTransform}
+
+\begin{abstract}
+  \input{chapters/abstract}
+\end{abstract}
+\begin{abstract}\textbf{(german)}
+  \input{chapters/abstract_de}
+\end{abstract}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+\newpage 
+
+\section{Introduction}
+\input{chapters/introduction}
+
+% \section{Probability Theory}
+% \input{chapters/probability_theory}
+
+\section{Markov Chains}
+\input{chapters/markov_chains}
+
+\section{Metropolis Hastings}
+\input{chapters/metropolis_hastings}
+
+\section{Probabilistic Programs}
+\input{chapters/probabilistic_programs}
+
+\section{Trace Space}
+\input{chapters/trace_space}
+
+\section{Inference}
+\input{chapters/inference}
+
+\section{Embedding into Rust}
+\input{chapters/embedding_into_rust}
+
+\section{Examples}
+\input{chapters/examples}
+
+\section{Outlook \& Related Work}
+\input{chapters/outlook_related_work}
+
+\section{Conclusion}
+\input{chapters/conclusion}
+
+\newpage
+
+% \bibliographystyle{plainnat}
+\nocite{*}
+\bibliographystyle{splncs04}
+\bibliography{thesis.bib}
+
+\newpage
+
+\input{declaration.tex}
+
+\end{document}

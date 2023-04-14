@@ -453,11 +453,7 @@ The implementation of the Metropolis Hastings procedure can with this be simply 
 
 One detail to be noted about the actual implementation is that instead of operating on probabilities directly, rather "log probablities" are used for their improved stability and performance.
 
-
 ## Examples
-
-
-
 
 ## Outlook & Related Work
 

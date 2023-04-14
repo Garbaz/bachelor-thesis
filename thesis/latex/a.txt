@@ -1,0 +1,15 @@
+-rw-rw-r-- 1 tobi tobi 2,3K Apr 14 15:24 thesis.aux
+-rw-rw-r-- 1 tobi tobi  521 Apr 14 15:24 thesis.bbl
+-rw-rw-r-- 1 tobi tobi  431 Apr 14 13:53 thesis.bib
+-rw-rw-r-- 1 tobi tobi  866 Apr 14 15:24 thesis.blg
+-rw-rw-r-- 1 tobi tobi  13K Apr 14 15:24 thesis.fdb_latexmk
+-rw-rw-r-- 1 tobi tobi  55K Apr 14 15:24 thesis.fls
+-rw-rw-r-- 1 tobi tobi  30K Apr 14 15:24 thesis.log
+-rw-rw-r-- 1 tobi tobi 1,7K Apr 14 15:24 thesis.out
+-rw-rw-r-- 1 tobi tobi 590K Apr 14 15:24 thesis.pdf
+-rw-rw-r-- 1 tobi tobi  174 Apr 14 13:29 thesis.ptb
+-rw-rw-r-- 1 tobi tobi   63 Apr 14 13:29 thesis.pyg
+-rw-rw-r-- 1 tobi tobi 127K Apr 14 15:24 thesis.synctex.gz
+-rw-rw-r-- 1 tobi tobi 2,3K Apr 14 15:22 thesis.tex
+-rw-rw-r-- 1 tobi tobi 1,1K Apr 14 15:24 thesis.toc
+-rw-rw-r-- 1 tobi tobi 459K Apr 14 15:24 thesis.xdv
