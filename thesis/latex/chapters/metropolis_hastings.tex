@@ -29,11 +29,17 @@ And under some assumptions about the target distribution $\pi$ and the kernel $q
 
 So in total the complete Metropolis-Hastings algorithm looks as follows:
 
-Repeat forever:
-  - Sample $\hat{x}_{t+1}$ from $q(x_t)$
-  - Calculate acceptance ratio $\alpha$ based upon $\hat{x}_{t+1}$ and $x_t$
-  - Sample $u \sim \mathcal{U}[0,1]$
-  - If $u \le \alpha$, then $x_{t+1} := \hat{x}_{t+1}$, else $x_{t+1} := x_t$
+\begin{minipage}{\linewidth}
+\begin{itemize}
+\item Repeat forever:
+  \begin{itemize}
+    \item Sample $\hat{x}_{t+1}$ from $q(x_t)$
+    \item Calculate acceptance ratio $\alpha$ based upon $\hat{x}_{t+1}$ and $x_t$
+    \item Sample $u \sim \mathcal{U}[0,1]$
+    \item If $u \le \alpha$, then $x_{t+1} := \hat{x}_{t+1}$, else $x_{t+1} := x_t$
+  \end{itemize}
+\end{itemize}
+\end{minipage}
 
 One in practice highly relevant property to note about the definition of MH is the fact that we only ever need to compute a ratio $\frac{\pi(x)}{\pi(y)}$ between two results of the probability density function $\pi(x)$. This means that we do not actually have to be able to compute $\pi(x)$ directly, but rather that it is sufficient to be able to compute some proportional function $\tilde{\pi}(x) \propto \pi(x)$, since $\frac{\tilde{\pi}(x)}{\tilde{\pi}(y)} = \frac{\pi(x)}{\pi(y)}$.
 

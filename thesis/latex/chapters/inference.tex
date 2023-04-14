@@ -6,13 +6,15 @@ As the kernel $q$ we could take any scheme that proposes a new trace $t'$ given 
 
 How we pick a new value $v'$ for some primitive entry $P(d,p,v)$ can also be done in any of many ways. We could simply draw a new sample from the distribution $d[p]$, independent from the prior value $v$. But we also could come up with a more informed local kernel $q_{d[p]}[v]$ for a primitive distribution, picking the new value in some way dependent on the prior value $v$. For example for a distribution $d[p]$ defined on $\mathbb{R}$, we could take as it's local kernel a normal distribution centered around the prior value, $q_{d[p]}[v] := \mathcal{N}[\mu = v, \sigma^2 = s^2]$ (for some choice of $s^2$). For the sake of generality we assume from here that for every primitive distribution $d[p]$ some local kernel $q_{d[p]}[v]$ has been defined, which might or might not depend on $v$ and could just be the distribution $d[p]$ itself.
 
-Formally, we define the procedure for the kernel $q[t]$:
+Formally, we define the procedure for the kernel $q[t]$ as:
 
-- Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
-- Sample a proposal value $v' \sim q_{d[p]}[v]$
-- Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
-- Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
-- Return $t'$
+\begin{itemize}
+\item Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
+\item Sample a proposal value $v' \sim q_{d[p]}[v]$
+\item Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
+\item Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
+\item Return $t'$
+\end{itemize}
 
 One advantage of picking such a simple kernel is that the kernel part in the acceptance ration reduces to a rather simple calculation \cite{wingate2011lightweight}:
 
@@ -35,14 +37,18 @@ Since with the evaluation of $sdeval(f,t)$ for some trace $t$ we not just get th
 
 In total, the MH procedure to sample from the distribution defined by some probabilistic program $f$ looks as follows:
 
-- Initialize our trace $t := sdeval(f,\emptyset)$
-- Repeat forever:
-  - Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
-  - Sample a proposal value $v' \sim q_{d[p]}[v]$
-  - Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
-  - Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
-  - Clean out any unusued entries in $t'$
-  - Calculate the acceptance ration $\alpha$ as described above
-  - Sample $u \sim \mathcal{U}[0,1]$
-  - If $u < \alpha$ then $t := t'$
-  - Yield the return value associated with $t$ as a sample
+\begin{itemize}
+\item Initialize our trace $t := sdeval(f,\emptyset)$
+\item Repeat forever:
+  \begin{itemize}
+  \item Flat-uniformly pick a primitive entry $P(d,p,v)$ in the trace $t$
+  \item Sample a proposal value $v' \sim q_{d[p]}[v]$
+  \item Define $\tilde{t}'$ as $t$ with $P(d,p,v)$ replaced by $P(d,p,v')$
+  \item Evaluate $sdeval(f,\tilde{t}')$ to get the valid proposal trace $t'$
+  \item Clean out any unusued entries in $t'$
+  \item Calculate the acceptance ration $\alpha$ as described above
+  \item Sample $u \sim \mathcal{U}[0,1]$
+  \item If $u < \alpha$ then $t := t'$
+  \item Yield the return value associated with $t$ as a sample
+  \end{itemize}
+\end{itemize}
