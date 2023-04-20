@@ -1,14 +1,16 @@
-While there are many MCMC algorithms, with differing conditions for application and advantages/disadvantages in terms of implementation complexity and performance, we will focus here on a principally rather simple algorithm based upon seminal work by N. Metropolis et al and W. K. Hastings, the "Metropolis-Hastings algorithm" (MH).
+\section{Metropolis Hastings}
 
-As with any MCMC algorithm, the problem we are trying to solve with MH is the need to obtain representative samples from some distribution of interest $\pi$, the \textit{target}, and the general method to do so is to explore the $\mathbb{X}$ of possible samples from $\pi$, it's \textit{support}, via the iterative development of a Markov chain through this space. How these steps are taken is the primary distinction between different MCMC methods.
+While there are many Markov chain Monte Carlo algorithms (MCMC), with differing conditions for application and advantages/disadvantages in terms of implementation complexity and performance, we will focus here on a principally rather simple algorithm, the "Metropolis-Hastings algorithm" (MH) \cite{metropolis1953equation} \cite{hastings1970monte}.
 
-To apply MH to sampling from some distribution $\pi$, we need to pick a (usually, relative to $\pi$, very simple) distribution $q$, a ]\textit{kernel}, with the same support as $\pi$. This kernel defines our exploration of the support $\mathbb{X}$. Specifically, at step $X_t = x_t$ in our Markov chain we use $q$ to choose a possible next step $\hat{x}_{t+1} \sim q[x_t]$. So $q$ can, and usually will, depend on the current position $x_t$ in $\mathbb{X}$.
+The problem we are trying to solve with MH is the desire to obtain representative samples from some distribution of interest $\pi$, the \textit{target}. And as is the principle of MCMC methods, we do so by exploring the $\mathbb{X}$ of possible samples from $\pi$, it's \textit{support}, via the iterative development of a Markov chain through this space. How exactly these steps are taken is the principle concern of MH.
 
-If our $\pi$ were for example defined over $\mathbb{X} = \mathbb{R}^2$, a possible candidate for $q$ would be a two-dimensional normal distribution centered around $x_t$. So at each step in Markov chain exploration of $\mathbb{X}$, we would draw $\hat{x}_{t+1} \sim \mathcal{N}[\mu = x_t, \sigma^2 = s^2]$ (with $s^2$ being in principle an arbitrary, but in practice a very important parameter to tune).
+To apply MH to sampling from some distribution $\pi$, we first need to pick a (usually, relative to $\pi$, very simple) distribution $q[x]$, the \textit{proposal kernel}, with the same support as $\pi$. This kernel defines our exploration of the support $\mathbb{X}$. Specifically, at every step $x_t$ in our Markov chain we use $q$ to choose a possible next step $\hat{x}_{t+1} \sim q[x_t]$. So $q$ can, and usually will, depend on the current position $x_t$ in $\mathbb{X}$.
 
-If we were to simply always take this proposed step $\hat{x}_{t+1}$ drawn from $q$ then the result would be a random walk through $\mathbb{X}$ entirely independent from our target distribution $\pi$. With the goal of course being to obtain a series of samples from $\pi$, this would of course not be of much use.
+If our $\pi$ were for example defined over $\mathbb{X} = \mathbb{R}^2$, a possible candidate for $q$ would be a two-dimensional normal distribution centered around $x_t$. So at each step in Markov chain exploration of $\mathbb{X}$, we would draw $\hat{x}_{t+1} \sim \mathcal{N}^2[\mu = x_t, \sigma^2 = s^2]$ (with $s^2$ being a parameter to be tuned for our Markov chain to converge faster).
 
-The second part to every sampling step in the MH algorithm is to decide whether to take the proposed step drawn from $q$, $x_{t+1} = \hat{x}_{t+1}$, or whether to remain at the current position in $\mathbb{X}$, $x_{t+1} = x_{t}$. This decision is once more done randomly and based upon $\pi$, $q$ and the proposal $\hat{x}_{t+1}$:
+If we were to simply always take this proposed step $\hat{x}_{t+1}$ drawn from $q[x_t]$, then the result would be a random walk through $\mathbb{X}$ entirely independent from our target distribution $\pi$. With the goal of course being to obtain a series of samples from $\pi$, this would of course not be of much use.
+
+The second part to every sampling step in the MH algorithm is to decide whether to take the proposed step drawn from $q[x_t]$, $x_{t+1} := \hat{x}_{t+1}$, or whether to remain at the current position in $\mathbb{X}$, $x_{t+1} := x_t$. This decision is itself done randomly:
 
 \begin{align*}
 x_{t+1} & = \begin{cases}
@@ -19,13 +21,13 @@ x_{t+1} & = \begin{cases}
 u & \sim \mathcal{U}[0,1]
 \end{align*}
 
-The value $\alpha$ defined here is called the \textit{acceptance ratio}. If $\alpha$ is equal to $0$, which would be the case if $\pi(\hat{x}_{t+1}) = 0$, then we will definitely remain in place, since $P(U \le 0) = 0$. So our Markov chain will never step to values which are impossible to be a sample from $\pi$.
+The value $\alpha$ defined here is called the \textit{acceptance ratio}. If $\alpha$ is equal to $0$, say if $\pi(\hat{x}_{t+1}) = 0$, then we will definitely remain in place, since $P(U \le 0) = 0$. So our Markov chain will never step to values which are impossible to be a sample from $\pi$.
 
-If on the other hand $\alpha$ is greater than or equal to $1$, which would be the case if $\pi(\hat{x}_{t+1}) \ge {\pi(x_t)}$ (assuming a symetric kernel $q$ for which the second right fraction cancels out), then we will definitely take the proposed step, since $P(U \le 1) = 1$. So our Markov chain will always step to values that are more likely under $\pi$ than the current value.
+If on the other hand $\alpha$ is greater than or equal to $1$, say if $\pi(\hat{x}_{t+1}) \ge {\pi(x_t)}$ and $q(x_t | \hat{x}_{t+1}) = q(\hat{x}_{t+1} | x_t)$, then we will definitely take the proposed step, since $P(U \le 1) = 1$. So our Markov chain will always tend towards regions of more likely values under $\pi$.
 
-For any $\alpha$ between $0$ and $1$, we will sometimes take the proposed step and sometimes will not, depending on what value is drawn for $U$. So we can still step "back down" to values that are less likely than the current value, but this is increasingly unlikely the smaller the ratio between the likelyhood under $\pi$ of the value after a proposed step and the current value. As a result, we will generally tend towards sampling from regions of high probablity under $\pi$, while also in the long run exploring regions of lower (positive) probablity.
+For any $\alpha$ between $0$ and $1$, we will sometimes take the proposed step and sometimes will not, depending on what value is drawn for $U$. So we can still step "back down" to values that are less likely than the current value, but this is increasingly unlikely the smaller the ratio between the probability under $\pi$ of the value after a proposed step and the current value. As a result, we will generally tend towards sampling from regions of high probability under $\pi$, while also in the long run exploring regions of lower (positive) probability.
 
-And under some assumptions about the target distribution $\pi$ and the kernel $q$ it is possible to rigorously prove that, at least in the limit, the Markov chain of samples generated as such will converge to being a sequence of (dependent) samples from $\pi$.
+And under some assumptions about the target distribution $\pi$ and the kernel $q$ it is possible to rigorously prove that, at least in the limit, the Markov chain of samples generated as such will eventually converge to being a sequence of (dependent) samples from $\pi$ \cite{metropolis1953equation}.
 
 So in total the complete Metropolis-Hastings algorithm looks as follows:
 
@@ -33,10 +35,10 @@ So in total the complete Metropolis-Hastings algorithm looks as follows:
 \begin{itemize}
 \item Repeat forever:
   \begin{itemize}
-    \item Sample $\hat{x}_{t+1}$ from $q(x_t)$
-    \item Calculate acceptance ratio $\alpha$ based upon $\hat{x}_{t+1}$ and $x_t$
-    \item Sample $u \sim \mathcal{U}[0,1]$
-    \item If $u \le \alpha$, then $x_{t+1} := \hat{x}_{t+1}$, else $x_{t+1} := x_t$
+  \item Sample $\hat{x}_{t+1}$ from $q(x_t)$
+  \item Calculate acceptance ratio $\alpha$ based upon $\hat{x}_{t+1}$ and $x_t$
+  \item Sample $u \sim \mathcal{U}[0,1]$
+  \item If $u \le \alpha$, then $x_{t+1} := \hat{x}_{t+1}$, else $x_{t+1} := x_t$
   \end{itemize}
 \end{itemize}
 \end{minipage}
@@ -49,6 +51,6 @@ As a very common practical example, say we would like to generate samples from s
 \pi(x) = p(x | w) = \frac{p(w | x) p(x)}{p(w)}
 \end{equation*}
 
-While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly getting a value for $p(w)$ is rather difficult or even impossible. Usually one would have to compute it from the other two quantities as $p(w) = \int p(w | x) p(x) dx$, which can be rather costly.
+While calculating $p(w | x)$ and $p(x)$ might be straightforward, often times directly getting a value for $p(w)$ is rather difficult. Usually one would have to compute it from the other two quantities as $p(w) = \int p(w | x) p(x) dx$.
 
-With MH however, since $p(w)$ does not depend on $x$ and we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w) \pi(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with respect to $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any costly integrals.
+With MH however, since $p(w)$ does not depend on $x$ and we only need to know $\pi(x)$ up to a proportionality constant, we can simply define $\tilde{\pi}(x) = p(w) \pi(x) = p(w | x) p(x)$ and calculate our acceptance ratio $\alpha$ with respect to $\tilde{\pi}$ rather than $\pi$, sidestepping the need to evaluate any possibly intractable integrals.
