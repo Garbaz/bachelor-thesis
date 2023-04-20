@@ -97,7 +97,7 @@ fn example5(mean_height: f64, deviation: f64) -> f64 {
 \end{lstlisting}
 \end{minipage}
 
-Just like with the observe statement, the condition statement doesn't interfere at all with the regular execution of the program, but rather only affects the calculation of the total probability. So in the end, even if the expression inside a condition statement evaluates to $false$, the function will continue as normal and still return a value as normal, but the associated probability is $0$.
+Just like with the observe statement, the condition statement doesn't interfere at all with the regular execution of the program, but rather only affects the calculation of the total probability. So in the end, even if the expression inside a condition statement evaluates to $false$, the function will continue as normal and still return a value as normal, but the associated probability will be $0$.
 
 In fact, the effect of a condition statement is no different from an observe statement with the value of the Boolean expression being observed from a distribution from which we sample the value $true$ with a probability of $1$, like for example a Bernoulli distribution $\text{Bern}(p)$ with a parameter of $p=1$. However, in practice, for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
 
@@ -133,6 +133,6 @@ fn example5c(mean_height: f64, deviation: f64) -> f64 {
 \end{lstlisting}
 \end{minipage}
 
-It should be noted however, that, whenever possible, we should try to soften any hard conditions in our probabilistic program to smoother observes, such that executions that only just quite don't satisfy any constraints still have some non-zero probability. Otherwise, there is no way for the inference algorithm to distinguish between a sample from the program having a probability of $0$ because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
+It should be noted that, whenever possible, we should try to soften any hard conditions in our probabilistic program to smoother observes, such that executions that only just quite don't fully satisfy it's constraints still have some non-zero probability. Otherwise, there is no way for the inference algorithm to distinguish between a sample from the program having a probability of $0$ because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
 
-Since condition statements are just a particular kind of observe statement, in the following we will only concern ourselves with sample expressions and observe statements.
+Since condition statements are essentially just a particular kind of observe statement, in the following we will only concern ourselves with sample expressions and observe statements.

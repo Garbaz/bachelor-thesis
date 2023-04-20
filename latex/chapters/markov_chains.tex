@@ -2,7 +2,7 @@
 
 A Markov chain is a random sequence of values from some space. In contrast to any other random sequence, a Markov chain is characterized the particular property that the distribution determining every value in the chain is dependent on exactly the directly preceding value. If considered as a series of steps through some space of values, this means that every step taken is only based on the current location in the space, and entirely agnostic to how we got there. Or perhaps more philosophically, in a Markov chain, the future depends on the present, but not the past.
 
-In mathematical terms, we define a \textit{Markov chain} as a series $(x_t)_{t \in \mathbb{N}_0}$ in some space $\mathbb{X}$, where we choose the starting value $x_0$, and every value $x_{t + 1}$ after that is defined in accordance to some \textit{transition kernel} $k$, $x_{t+1} \sim k[x_t]$.
+In mathematical terms, we define a \textit{Markov chain} as a series $(x_t)_{t \in \mathbb{N}_0}$ in some space $\mathbb{X}$, where we choose the starting value $x_0$, and every value $x_{t + 1}$ after that is defined in accordance to some \textit{transition kernel} $q$, $x_{t+1} \sim q[x_t]$.
 
 The advantage of such a forgetful sequence is that it is possible to prove general propositions about it's behavior, such as whether or not it will converge towards a stable distribution and what this distribution will look like. But by each value depending on the previous, much more interesting behavior can emerge than with a sequence of entirely independently drawn samples.
 
