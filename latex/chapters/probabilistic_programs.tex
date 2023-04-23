@@ -6,11 +6,11 @@ Besides the syntactic difference to an ordinary function, we will later on defin
 
 \subsection{Sample Expression}
 
-A \textit{sample} expression is semantically rather simple, it allows us to randomly draw a sample from some distribution, be it a primitive distribution provided by our implementation or a distribution defined as another probabilistic program. The resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call to some (pseudo-)random sampling procedure.
+A \textit{sample} expression is semantically rather simple, it allows us to randomly draw a sample from some distribution, be it a primitive distribution \{\ref{example1}\} provided by our implementation or a distribution defined as another probabilistic program \{\ref{example2}\}. The resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call to some (pseudo-)random sampling procedure.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// Sampling from a primitve distribution and using loops
 #[prob]
 fn example1(p: f64) -> u64 {
     let mut c = 0;
@@ -20,12 +20,14 @@ fn example1(p: f64) -> u64 {
     c
 }
 \end{lstlisting}
-\end{minipage}
+\caption{Example of sampling from a primitve distribution and using loops}
+\label{example1}
+\end{figure}
+% \end{minipage}
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// Sampling from another probabilistic program and using
-/// conditionals & recursion
 #[prob]
 fn example2(n: u64) -> u64 {
     if sample!(example1(1. / (n as f64))) >= n {
@@ -35,21 +37,23 @@ fn example2(n: u64) -> u64 {
     }
 }
 \end{lstlisting}
-\end{minipage}
+\caption{Example of sampling from another probabilistic program and using conditionals \& recursion}
+\label{example2}
+\end{figure}
+% \end{minipage}
 
 
 \subsection{Observe Statement}
 
-The other special kind of expression we can use in a probabilistic program is an \textit{observe} statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution. We essentially say that "we know that this value is the result of sampling from this distribution with these parameters", which might or might not be likely, correspondingly affecting the probability of the particular execution of the probabilistic program as a whole. 
+The other special kind of expression we can use in a probabilistic program is an \textit{observe} statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution \{\ref{example3}, \ref{example4}\}. We essentially say that "we know that this value is the result of sampling from this distribution with these parameters", which might or might not be likely, correspondingly affecting the probability of the particular execution of the probabilistic program as a whole. 
 
 Notably, neither the value we are observing, nor any parameters to the distribution have to be constant. They can result from any arbitrary combination of ordinary and probabilistic computations that occur before it. However, we can not observe values from a distribution defined by another probabilistic program, only from primitive distributions.
 
 Observing a value from a distribution does not have any direct effect on the execution of our program. If we were to take a probabilistic program and remove all observe statements, it would still principally run the same way. However, observe statements greatly affect the way samples will be drawn from the probabilistic program with the MH algorithm described later on. If for example, we were to observe a value of $2$ from a uniform distribution $\mathcal{U}[0,1]$, which of course is not possible, i.e. has a probability of zero, then the total probability of the particular execution would also be zero. In short, observe statements allow us to, smoothly, constrain what instances of our model are likely or even possible.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// What parameter `p` for a bernoulli distribution explains our
-/// observed results best?
 #[prob]
 fn example3(obs: Vec<bool>) -> f64 {
     let p = sample!(uniform(0., 1.));
@@ -59,12 +63,14 @@ fn example3(obs: Vec<bool>) -> f64 {
     p
 }
 \end{lstlisting}
-\end{minipage}
+\caption{What parameter \lstinline{p} for a bernoulli distribution explains our observed results best?}
+\label{example3}
+\end{figure}
+% \end{minipage}
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// What might have been the start position of a random walk,
-/// given we know the end position and the number of steps?
 #[prob]
 fn example4(steps: u64, end_pos: f64) -> f64 {
     let start_pos = sample!(uniform(-10., 10.));
@@ -76,18 +82,19 @@ fn example4(steps: u64, end_pos: f64) -> f64 {
     start_pos
 }
 \end{lstlisting}
-\end{minipage}
+\caption{What might have been the start position of a random walk, given we know the end position and the number of steps?}
+\label{example4}
+\end{figure}
+% \end{minipage}
 
 
 \subsection{Condition Statement}
 
-While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't. A condition statements allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't \{\ref{example5}\}. A condition statements allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// Modelling heights of e.g. people with a normal distribution
-/// around some mean value.
-/// However, a person's height can never be negative!
 #[prob]
 fn example5(mean_height: f64, deviation: f64) -> f64 {
     let height = sample!(normal(mean_height, deviation));
@@ -95,17 +102,18 @@ fn example5(mean_height: f64, deviation: f64) -> f64 {
     height
 }
 \end{lstlisting}
-\end{minipage}
+\caption{Modelling heights of e.g. people with a normal distribution around some mean value. However, a person's height can never be negative!}
+\label{example5}
+\end{figure}
+% \end{minipage}
 
 Just like with the observe statement, the condition statement doesn't interfere at all with the regular execution of the program, but rather only affects the calculation of the total probability. So in the end, even if the expression inside a condition statement evaluates to $false$, the function will continue as normal and still return a value as normal, but the associated probability will be $0$.
 
-In fact, the effect of a condition statement is no different from an observe statement with the value of the Boolean expression being observed from a distribution from which we sample the value $true$ with a probability of $1$, like for example a Bernoulli distribution $\mathcal{Bn}(p)$ with a parameter of $p=1$. However, in practice, for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
+In fact, the effect of a condition statement is no different from an observe statement with the value of the Boolean expression being observed from a distribution from which we sample the value $true$ with a probability of $1$, like for example a Bernoulli distribution $\text{Bn}(p)$ with a parameter of $p=1$ \{\ref{example5b}, \ref{example5c}\}. However, in practice, for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// Instead of the condition expression, we could also simply
-/// observe the value of our expression from a `bernoulli(1.)`
-/// distribution.
 #[prob]
 fn example5b(mean_height: f64, deviation: f64) -> f64 {
     let height = sample!(normal(mean_height, deviation));
@@ -113,12 +121,14 @@ fn example5b(mean_height: f64, deviation: f64) -> f64 {
     height
 }
 \end{lstlisting}
-\end{minipage}
+\caption{Instead of the condition expression, we could also simply observe the value of our expression from a \lstinline{bernoulli(1.)} distribution.}
+\label{example5b}
+\end{figure}
+% \end{minipage}
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
 \begin{lstlisting}
-/// We can even simply define our own `condition` as a
-/// probabilistic program.
 #[prob]
 fn condition(c: bool) {
     observe!(bernoulli(1.), c);
@@ -131,8 +141,34 @@ fn example5c(mean_height: f64, deviation: f64) -> f64 {
     height
 }
 \end{lstlisting}
-\end{minipage}
+\caption{We can even simply define our own \lstinline{condition} as a probabilistic program.}
+\label{example5c}
+\end{figure}
+% \end{minipage}
 
-It should be noted that, whenever possible, we should try to soften any hard conditions in our probabilistic program to smoother observes, such that executions that only just quite don't fully satisfy it's constraints still have some non-zero probability. Otherwise, there is no way for the inference algorithm to distinguish between a sample from the program having a probability of $0$ because it's completely off from being from a valid execution or very close but just not quite there, causing the algorithm to devolve into a rejection sampler, which greatly impacts efficiency.
+It should be noted that, we should in practice whenever possible soften any hard conditions in our probabilistic program to observes. Otherwise, the inference algorithm will devolve into a rejection sampler or even result in the algorithm generating no samples at all, since it can not find a trace that satisfies the given constraints. For example, if we were to add a condition to our program that requires a value of $0.5$ to be sampled from a uniform distribution $\mathcal{U}(0,1)$, then the inference algorithm would endlessly discard traces until sampling exactly $0.5$, which essentially is an impossible event \{\ref{example6}\}. But observing $0.5$ from $\mathcal{U}(0,1)$ does not require any random sampling to occurr, causing no such issues \{\ref{example6b}\}.
 
-Since condition statements are essentially just a particular kind of observe statement, in the following we will only concern ourselves with sample expressions and observe statements.
+\begin{figure}[h]
+\begin{lstlisting}
+#[prob]
+fn example6() {
+    condition!(sample!(uniform(0,1)) == 0.5);
+}
+\end{lstlisting}
+\caption{If we condition on \lstinline{0.5} to be sampled from \lstinline{uniform(0,1)}, then we will never get any samples.}
+\label{example6}
+\end{figure}
+
+\begin{figure}[h]
+\begin{lstlisting}
+#[prob]
+fn example6b() {
+    observe!(uniform(0,1), 0.5);
+}
+\end{lstlisting}
+\caption{If we instead observe \lstinline{0.5} from \lstinline{uniform(0,1)}, then we will get samples.}
+\label{example6b}
+\end{figure}
+            
+
+Since we can consider condition statements to just be a particular kind of observe statement, in the following we will only concern ourselves with sample expressions and observe statements.
