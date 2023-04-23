@@ -2,7 +2,7 @@
 
 If a probabilistic program at hand were only to contain sample expressions and no observe statements, drawing samples from the distribution represented by it would be as simple as just running the program as normal. However, if we were to do the same with a program that does contain observe statements, we would get samples that do not represent the actual distribution described by the program. We could even get samples which have a probability of $0$, simply by the execution resulting in that sample containing observe statement that are impossible. In general, a probabilistic program with observe statements does not directly function as a sampler for the distribution it represents. All it does is to produce random values and correctly calculate the probability of these values.
 
-And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from out program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the probability of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask somehow how likely it would have been for it to return this value. This is not directly possible for any arbitrary probabilistic program.
+And that is not even enough to directly apply the Metropolis Hastings (MH) algorithm to the problem of getting representative samples from our program, since to explore some space with MH we need to be able to pick some arbitrary point in this space and ask for the probability of it coming from the distribution. So if we were to want to explore the space of values output by our probabilistic program, we would have to be able to pick some value and ask somehow how likely it would have been for it to return this value. This is not directly possible for any arbitrary probabilistic program.
 
 However, there is a space for which our probabilistic program can answer this question necessary for applying MH, and that is the space of possible executions of the program. Rather than running our probabilistic program normally and actually drawing a random value at each sample expression, accumulating the total probability of the execution in the process, we instead pick the value to be drawn at every sample expression beforehand and then run the program, we still get the correct total probability for this execution, but for a \textit{trace} of predetermined values.
 
@@ -49,7 +49,7 @@ fn example8() -> f64 {
 
 We therefore consider a trace of a probabilistic program not to necessarily be a one-to-one representation of a possible execution of the program. Rather, we allow for a trace picked beforehand for the execution of our program to only impose predetermined values for some of the sample expressions, and also to contain entries that are incorrect or are never reached. During execution, every time a sample expression is evaluated, we look into the trace and see if there is an entry determining what the result of the evaluation should be. If we do find an entry, we take the value, otherwise we just non-deterministically sample a new value and insert it into the trace as if it had always been there. Once the partially deterministic execution has completed, we discard any entries in the trace that weren't used, and so end up with a trace that once more represents a possible execution. A trace that fully determines the execution of our probabilistic program we call a \textit{valid} trace. It might contain unused entries, but it at least has to contain an entry for every sample expression encountered, making the execution fully deterministic.
 
-Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters \{\ref{example9}\}. In this case, we can still deterministically use the value from the trace, but have to re-evaluate it's probability under the distribution with the new parameters.
+Given that the parameters to a distribution can arbitrarily depend on the results of previous sample expressions, it is also very likely that the entry we find when trying to deterministically evaluate a sample expression is for the same distribution, but with different parameters \{\ref{example9}\}. In this case, we can still deterministically use the value from the trace, but have to re-evaluate its probability under the distribution with the new parameters.
 
 % \begin{minipage}{\linewidth}
 \begin{figure}[h]
@@ -102,9 +102,9 @@ fn example10() -> f64 {
 \end{figure}
 % \end{minipage}
 
-Since the number of times any sample expressions appearing inside loops in our probabilistic program are encountered can depend on the value of prior sampling expressions, we also allot for every iteration of a loop a sub-trace, such that the number of times a loop is executed does not affect whether or not the entry in the trace corresponding to any sample expressions appearing after to loop is found or missed.
+Since the number of times any sample expressions appearing inside loops in our probabilistic program are encountered can depend on the value of prior sampling expressions, we also allot for every iteration of a loop a sub-trace, such that the number of times a loop is executed does not affect whether or not the entry in the trace corresponding to any sample expressions appearing after the loop is found or missed.
 
-So formally, we define a trace as a tree $T := L(\mathbb{N}_0, [T]) | F(\mathbb{I}, [T]) | P(D,P,V)$ (Similar to Wingate et al.'s database \& naming scheme \cite{wingate2011lightweight}). A node $L(n,t)$ represents an iteration $n$ of a loop and it's corresponding sub-traces $t$. A node $F(i, t)$ represents a sample expression sampling from another probabilistic program identified by some identifier $i$, and the corresponding sub-traces $t$. And a node $P(d,p,v)$ represents a sample expression sampling from a primitive distribution $d$ with parameters $p$, and the sampled value $v$.
+So formally, we define a trace as a tree $T := L(\mathbb{N}_0, [T]) | F(\mathbb{I}, [T]) | P(D,P,V)$ (Similar to Wingate et al.'s database \& naming scheme \cite{wingate2011lightweight}). A node $L(n,t)$ represents an iteration $n$ of a loop and its corresponding sub-traces $t$. A node $F(i, t)$ represents a sample expression sampling from another probabilistic program identified by some identifier $i$, and the corresponding sub-traces $t$. And a node $P(d,p,v)$ represents a sample expression sampling from a primitive distribution $d$ with parameters $p$, and the sampled value $v$.
 
 We define the semi-deterministic evaluation $sdeval(f,t)$ of a probabilistic program $f$ for a given trace $t$ as follows:
 
@@ -127,7 +127,7 @@ We define the semi-deterministic evaluation $sdeval(f,t)$ of a probabilistic pro
     \end{itemize}
   \item ... every time a sample expression would be evaluated, do instead:
     \begin{itemize}
-    \item If it's sampling another probabilistic program $g$:
+    \item If its sampling another probabilistic program $g$:
       \begin{itemize}
       \item Look in $t$ whether a sub-trace for $g$ exists
       \item If it doesn't, create a new one and attach it to $t$
@@ -135,7 +135,7 @@ We define the semi-deterministic evaluation $sdeval(f,t)$ of a probabilistic pro
       \item Update the subtrace to the one generated by $g$
       \item Multiply the calculated probability from $g$ onto the total probability
       \end{itemize}
-    \item If it's sampling a primitive distribution $d$ with parameters $p$:
+    \item If its sampling a primitive distribution $d$ with parameters $p$:
       \begin{itemize}
       \item Look in $t$ whether an entry for d exists
       \item If it doesn't, sample from $d[p]$ as normal and add an entry to $t$

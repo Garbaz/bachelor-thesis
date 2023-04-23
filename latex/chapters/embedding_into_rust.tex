@@ -14,7 +14,7 @@ The part of the macro system of Rust that matters to us here are "procedural mac
 
 \subsection{prob}
 
-The attribute macro we define, which we shall call \lstinline{prob}, turns a probabilistic program $f$ into a function which returns a closure, which in turn captures all arguments to the original probabilistic program. This closure is the implementation of $sdeval(f,\cdot)$. It takes a predefined trace that (possibly incompletely) determines the execution and returns a valid trace of the execution, it's associated probability\footnote{For improved stability, in the actual implementation, we work with log probabilities instead of probabilities directly.}, and the actual return value of the probabilistic program.
+The attribute macro we define, which we shall call \lstinline{prob}, turns a probabilistic program $f$ into a function which returns a closure, which in turn captures all arguments to the original probabilistic program. This closure is the implementation of $sdeval(f,\cdot)$. It takes a predefined trace that (possibly incompletely) determines the execution and returns a valid trace of the execution, its associated probability\footnote{For improved stability, in the actual implementation, we work with log probabilities instead of probabilities directly.}, and the actual return value of the probabilistic program.
 
 \begin{minipage}{\linewidth}
 \begin{lstlisting}

@@ -2,7 +2,7 @@
 
 While there are many MCMC algorithms, with differing conditions for application and advantages/disadvantages in terms of implementation complexity and performance, we will focus here on a principally rather simple algorithm based upon seminal work by N. Metropolis et al and W. K. Hastings, the "Metropolis-Hastings algorithm" (MH).
 
-Like with all MCMC algorithms, the problem we are trying to solve with MH is the need to obtain samples from some distribution of interest $\pi$, the _target_, and the general method is to explore the space $\mathbb{X}$ of possible samples from $\pi$, it's _support_, via a Markov chain that iteratively steps through this space. How these steps are taken is the primary distinction between different MCMC methods.
+Like with all MCMC algorithms, the problem we are trying to solve with MH is the need to obtain samples from some distribution of interest $\pi$, the _target_, and the general method is to explore the space $\mathbb{X}$ of possible samples from $\pi$, its _support_, via a Markov chain that iteratively steps through this space. How these steps are taken is the primary distinction between different MCMC methods.
 
 As with many general MCMC algorithms, to apply MH to sampling from some distribution $\pi$, we need to pick a (usually, relative to $\pi$, very simple) distribution $q$, a _kernel_, with the same support as $\pi$. This kernel defines our exploration of the support $\mathbb{X}$. Specifically, at step $X_t = x_t$ in our Markov chain we use $q$ to choose a possible next step $\hat{X}_{t+1} \sim q[x_t]$. So $q$ can, and usually will, depend on the current position $x_t$ in $\mathbb{X}$.
 

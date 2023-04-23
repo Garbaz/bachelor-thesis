@@ -2,7 +2,7 @@
 
 A probabilistic program for the purposes of our implementation here is syntactically simply an ordinary function in an imperative programming language. This function can contain any code constructs that are part of the host language, including potentially troublesome things like conditionals, loops and recursion. However, a probabilistic program can, as opposed to an ordinary function, contain two additional syntax elements: "sample" expressions and "observe" statements.
 
-Besides the syntactic difference to an ordinary function, we will later on define a special evaluation procedure for probabilitic programs and a Metropolis Hastings (MH) algorithm such that we can draw samples from the distribution represented by probabilistic programs in accordance with the semantics layed out here.
+Besides the syntactic difference to an ordinary function, we will later on define a special evaluation procedure for probabilistic programs and a Metropolis Hastings (MH) algorithm such that we can draw samples from the distribution represented by probabilistic programs in accordance with the semantics laid out here.
 
 \subsection{Sample Expression}
 
@@ -90,7 +90,7 @@ fn example4(steps: u64, end_pos: f64) -> f64 {
 
 \subsection{Condition Statement}
 
-While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't \{\ref{example5}\}. A condition statements allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't \{\ref{example5}\}. A condition statement allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
 
 % \begin{minipage}{\linewidth}
 \begin{figure}[h]
