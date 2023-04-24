@@ -6,7 +6,7 @@ Besides the syntactic difference to an ordinary function, we will later on defin
 
 \subsection{Sample Expression}
 
-A \textit{sample} expression is semantically rather simple, it allows us to randomly draw a sample from some distribution, be it a primitive distribution \{\ref{example1}\} provided by our implementation or a distribution defined as another probabilistic program \{\ref{example2}\}. The resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call to some (pseudo-)random sampling procedure.
+A \textit{sample} expression is semantically rather simple, it allows us to randomly draw a sample from some distribution, be it a primitive distribution (Fig. \ref{example1}) provided by our implementation or a distribution defined as another probabilistic program (Fig. \ref{example2}). The resulting value of a sample expression is in every regard no different than as if it were simply an ordinary function call to some (pseudo-)random sampling procedure.
 
 % \begin{minipage}{\linewidth}
 \begin{figure}[h]
@@ -45,7 +45,7 @@ fn example2(n: u64) -> u64 {
 
 \subsection{Observe Statement}
 
-The other special kind of expression we can use in a probabilistic program is an \textit{observe} statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution \{\ref{example3}, \ref{example4}\}. We essentially say that "we know that this value is the result of sampling from this distribution with these parameters", which might or might not be likely, correspondingly affecting the probability of the particular execution of the probabilistic program as a whole. 
+The other special kind of expression we can use in a probabilistic program is an \textit{observe} statement. It allows us to state that, at this position in the code, and therefore possibly dependent on values computed so far, we "observe" some value from some distribution (Fig. \ref{example3}, Fig. \ref{example4}). We essentially say that "we know that this value is the result of sampling from this distribution with these parameters", which might or might not be likely, correspondingly affecting the probability of the particular execution of the probabilistic program as a whole. 
 
 Notably, neither the value we are observing, nor any parameters to the distribution have to be constant. They can result from any arbitrary combination of ordinary and probabilistic computations that occur before it. However, we can not observe values from a distribution defined by another probabilistic program, only from primitive distributions.
 
@@ -90,7 +90,7 @@ fn example4(steps: u64, end_pos: f64) -> f64 {
 
 \subsection{Condition Statement}
 
-While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't \{\ref{example5}\}. A condition statement allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
+While the core semantics of probabilistic programs are fully described by the addition of sample and observe statements, in practice we often times don't just want to observe some value from some distribution, but rather want to put a hard constraint on what executions should produce valid samples, and what shouldn't (Fig. \ref{example5}). A condition statement allows us to do just that. It checks whether some arbitrary Boolean expression evaluates to $true$, and if it doesn't, the probability of the whole execution is set to $0$. Otherwise, it does nothing.
 
 % \begin{minipage}{\linewidth}
 \begin{figure}[h]
@@ -109,7 +109,7 @@ fn example5(mean_height: f64, deviation: f64) -> f64 {
 
 Just like with the observe statement, the condition statement doesn't interfere at all with the regular execution of the program, but rather only affects the calculation of the total probability. So in the end, even if the expression inside a condition statement evaluates to $false$, the function will continue as normal and still return a value as normal, but the associated probability will be $0$.
 
-In fact, the effect of a condition statement is no different from an observe statement with the value of the Boolean expression being observed from a distribution from which we sample the value $true$ with a probability of $1$, like for example a Bernoulli distribution $\text{Bn}(p)$ with a parameter of $p=1$ \{\ref{example5b}, \ref{example5c}\}. However, in practice, for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
+In fact, the effect of a condition statement is no different from an observe statement with the value of the Boolean expression being observed from a distribution from which we sample the value $true$ with a probability of $1$, like for example a Bernoulli distribution $\text{Bn}(p)$ with a parameter of $p=1$ (Fig. \ref{example5b} \& \ref{example5c}). However, in practice, for readability and a small increase in computational efficiency, we rather use a condition statement directly to express hard constraints on the execution of our probabilistic program.
 
 % \begin{minipage}{\linewidth}
 \begin{figure}[h]
@@ -141,12 +141,12 @@ fn example5c(mean_height: f64, deviation: f64) -> f64 {
     height
 }
 \end{lstlisting}
-\caption{We can even simply define our own \lstinline{condition} as a probabilistic program.}
+\caption{We could even simply define our own \lstinline{condition} as a probabilistic program.}
 \label{example5c}
 \end{figure}
 % \end{minipage}
 
-It should be noted that, we should in practice whenever possible soften any hard conditions in our probabilistic program to observes. Otherwise, the inference algorithm will devolve into a rejection sampler or even result in the algorithm generating no samples at all, since it can not find a trace that satisfies the given constraints. For example, if we were to add a condition to our program that requires a value of $0.5$ to be sampled from a uniform distribution $\mathcal{U}(0,1)$, then the inference algorithm would endlessly discard traces until sampling exactly $0.5$, which essentially is an impossible event \{\ref{example6}\}. But observing $0.5$ from $\mathcal{U}(0,1)$ does not require any random sampling to occurr, causing no such issues \{\ref{example6b}\}.
+It should be noted that, we should in practice whenever possible soften any hard conditions in our probabilistic program to observes. Otherwise, the inference algorithm will devolve into a rejection sampler or even result in the algorithm generating no samples at all, since it can not find a trace that satisfies the given constraints. For example, if we were to add a condition to our program that requires a value of $0.5$ to be sampled from a uniform distribution $\mathcal{U}(0,1)$, then the inference algorithm would endlessly discard traces until sampling exactly $0.5$, which essentially is an impossible event (Fig. \ref{example6}). But observing $0.5$ from $\mathcal{U}(0,1)$ does not require any random sampling to occurr, causing no such issues (Fig. \ref{example6b}).
 
 \begin{figure}[h]
 \begin{lstlisting}

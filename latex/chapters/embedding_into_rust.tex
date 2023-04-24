@@ -16,15 +16,20 @@ The part of the macro system of Rust that matters to us here are "procedural mac
 
 The attribute macro we define, which we shall call \lstinline{prob}, turns a probabilistic program $f$ into a function which returns a closure, which in turn captures all arguments to the original probabilistic program. This closure is the implementation of $sdeval(f,\cdot)$. It takes a predefined trace that (possibly incompletely) determines the execution and returns a valid trace of the execution, its associated probability\footnote{For improved stability, in the actual implementation, we work with log probabilities instead of probabilities directly.}, and the actual return value of the probabilistic program.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[H]
+\begin{subfigure}{\textwidth}
 \begin{lstlisting}
-/// A minimal probabilistic program before translation ...
 #[prob]
 fn f(b : bool) -> u64 {
     1729
 }
+\end{lstlisting}
+\caption{A minimal probabilistic program before translation ...}
+\end{subfigure}
 
-/// ... and after translation by `prob`, with some details omitted
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}
 fn f(b : bool) -> (impl Fn(Trace) -> (Trace, f64, u64)) {
     move |old_trace : Trace| {
         let mut new_trace = Trace::Function("f", Vec::new());
@@ -33,19 +38,28 @@ fn f(b : bool) -> (impl Fn(Trace) -> (Trace, f64, u64)) {
     }
 }
 \end{lstlisting}
-\end{minipage}
+\caption{... and after translation by \lstinline{prob} (with some details omitted).}
+\end{subfigure}
+\end{figure}
+% \end{minipage}
 
 Furthermore, \lstinline{prob} injects the necessary code into any loops (\lstinline{loop}, \lstinline{while} and \lstinline{for} expressions) inside the program such that a subtrace is created for every iteration. For the scope of the loop's body, the trace of the outer scope is shadowed over by this subtrace.
 
-\begin{minipage}{\linewidth}
+
+% \begin{minipage}{\linewidth}
+\begin{figure}[H]
+\begin{subfigure}{\textwidth}
 \begin{lstlisting}
-// A for loop before translation ...
 let mut c = 1;
 for i in 0..10 {
     c *= i;
 }
+\end{lstlisting}
+\caption{A for loop before translation ...}
+\end{subfigure}
 
-// ... and after translation by `prob`
+\begin{subfigure}{\textwidth}
+\begin{lstlisting}
 let mut c = 1;
 {
     let mut loop_counter = 0;
@@ -60,41 +74,65 @@ let mut c = 1;
     }
 }
 \end{lstlisting}
-\end{minipage}
+\caption{... and after translation by \lstinline{prob}.}
+\end{subfigure}
+\end{figure}
+% \end{minipage}
 
 \subsection{sample \& observe}
 
 Rather than being part of \lstinline{prob}, the special treatment of sample and observe statements is implemented by defining for each a function-like macro that expects \lstinline{old_trace}, \lstinline{new_trace} and \lstinline{total_probability} to already exist in the current context and adds to them accordingly.
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[h]
+\begin{subfigure}{0.5\textwidth}
 \begin{lstlisting}
-// A sample expression ...
-sample!(uniform(0.,1.))
-
-// ... turns into a normal expression
-{
+let x = sample!(uniform(0.,1.));
+\end{lstlisting}
+\caption{A sample expression ...}
+\end{subfigure}
+~
+\begin{subfigure}{0.5\textwidth}
+\begin{lstlisting}
+let x = {
     let (value, probability) =
-        resample(uniform(0.,1.), old_trace, &mut new_trace);
+        resample(uniform(0.,1.), 
+                 old_trace,
+                 &mut new_trace);
     total_probability *= probability;
     value
-}
+};
 \end{lstlisting}
-\end{minipage}
+\caption{... turns into a normal expression.}
+\end{subfigure}
+\end{figure}
+% \end{minipage}
 
-\begin{minipage}{\linewidth}
+% \begin{minipage}{\linewidth}
+\begin{figure}[H]
+\begin{subfigure}{0.5\textwidth}
 \begin{lstlisting}
-// An observe statement ...
 observe!(bernoulli(0.5), true);
-
-// ... turns into a normal statement
-total_probability *= probability(bernoulli(0.5), true);
 \end{lstlisting}
-\end{minipage}
+\caption{An observe statement ...}
+\end{subfigure}
+~
+\begin{subfigure}{0.5\textwidth}
+\begin{lstlisting}
+total_probability *= 
+    probability(bernoulli(0.5), true);
+\end{lstlisting}
+\caption{... turns into a normal statement.}
+\end{subfigure}
+\end{figure}
+% \end{minipage}
 
-The implementation of the Metropolis Hastings algorithm can with this be simply defined to operate on any ordinary function that has the signature
+\subsection{Inference}
+
+Given this translation of probabilistic programs into ordinary functions, the implementation of the Metropolis Hastings algorithm can be simply defined to operate on any ordinary function that has the signature
 
 \begin{equation*}
-    Fn(\&mut Trace) \rightarrow (T, f64)
+    Fn(Trace) \rightarrow (Trace, f64, T)
 \end{equation*}
 
-for some type $T$. Otherwise, it is a direct implementation of the procedure described in the previous section.
+for some original return type $T$. Otherwise, it is a direct implementation of the procedure described in the previous section.
