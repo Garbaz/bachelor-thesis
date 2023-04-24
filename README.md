@@ -1,6 +1,6 @@
 # Embedded Probabilistic Programming in Rust
 
-The final thesis is at [**thesis-final.pdf**](https://raw.githubusercontent.com/Garbaz/bachelor-thesis/master/thesis-final.pdf)
+The thesis is at [**latex/thesis.pdf**](https://raw.githubusercontent.com/Garbaz/bachelor-thesis/master/latex/thesis.pdf)
 
 The code of this project is at [**Garbaz/probprog**](https://github.com/Garbaz/probprog)
 
