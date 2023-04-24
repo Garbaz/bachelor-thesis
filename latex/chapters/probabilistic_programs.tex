@@ -152,10 +152,10 @@ It should be noted that, we should in practice whenever possible soften any hard
 \begin{lstlisting}
 #[prob]
 fn example6() {
-    condition!(sample!(uniform(0,1)) == 0.5);
+    condition!(sample!(uniform(0., 1.)) == 0.5);
 }
 \end{lstlisting}
-\caption{If we condition on \lstinline{0.5} to be sampled from \lstinline{uniform(0,1)}, then we will never get any samples.}
+\caption{If we condition on \lstinline{0.5} to be sampled from \lstinline{uniform(0., 1.)}, then we will never get any samples.}
 \label{example6}
 \end{figure}
 
@@ -163,10 +163,10 @@ fn example6() {
 \begin{lstlisting}
 #[prob]
 fn example6b() {
-    observe!(uniform(0,1), 0.5);
+    observe!(uniform(0., 1.), 0.5);
 }
 \end{lstlisting}
-\caption{If we instead observe \lstinline{0.5} from \lstinline{uniform(0,1)}, then we will get samples.}
+\caption{If we instead observe \lstinline{0.5} from \lstinline{uniform(0., 1.)}, then we will get samples.}
 \label{example6b}
 \end{figure}
             
