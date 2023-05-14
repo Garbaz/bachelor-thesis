@@ -58,9 +58,9 @@ section {
 
 ## Modelling
 
-- The human mind creates approximate models of the world
+- Human mind creates approximate models of world
   - How? No clue (._.')
-- Science creates more precise approximate models of the world
+- Science creates more precise approximate models of world
   - How? Math!
 - Models specify structure, with open parameters
 - E.g. Newton's law of gravity
@@ -75,20 +75,22 @@ section {
 - Treat it as a partially random process
 - E.g. Coin flip
   - Don't try to predict singular throw (physics is hard)
-  - Instead describe the distribution of many throws
-- We trade predictive power for tractability & generality
+  - Instead describe distribution of many throws
+- Trade predictive power for tractability & generality
 - → Bayesian statistics
 
 
 ## Probabilistic Programming
 
 - _Usually:_
-  - Take simple well-understood distributions
-  - Combine them in some constrained way
+  - Take simple distributions
+  - Combine them in some simple way
+  - Do efficient inference
   - E.g. Generalized linear models
 - _Instead:_
-  - Take simple well-understood distributions
-  - Combine them in the most general way: Programming
+  - Take simple distributions
+  - Combine them in most general way: Programming
+  - Do somewhat less efficient inference
   - ⇒ **Probabilistic Programming**
 
 
@@ -154,7 +156,7 @@ fn coin(observations: Vec<bool>) -> f64 {
 
 <div style="position: fixed; top: 160px; right: 40px;">
   <video src="mcmc.webm"
-         width="600"
+         width="550"
          controls="true"
          autoplay="true"
          muted="true"
@@ -206,15 +208,27 @@ fn example10() -> f64 {
 - Run $f$ to get initial random trace $t_0$
 - Repeat:
   - Vary $t_t$ slightly to get $\hat{t}_{t+1}$
-  - Run $f$ with new trace $\hat{t}_{t+1}$ to get $\mathbf{p}(f() = \hat{t}_{t+1})$
-  - Accept $\hat{t}_{t+1}$ as $t_{t+1}$ or don't
+  - Run $f$ with proposal trace $\hat{t}_{t+1}$ to get probability of it
+  - Accept $\hat{t}_{t+1}$ as $t_{t+1}$ or don't, randomly
+    - _Omitting some tricky details here_
 
 
-## MCMC in Trace Space _(cont.)_
+## Embedding into Rust
+
+- Macros!
+- `#[prob]` translates ordinary function into probabilistic program
+  - `Fn(Trace) → (Trace, f64, T)` for some sample type `T`
+  - Injects tracing scaffolding
+- `sample!` & `observe!` read and modify trace
+- Inference just normal higher-order function
+- ⇒ Probabilistic programming in a crate <img src="cargo.png" height="28"></img>
 
 
+## Conclusion
 
-
-## Sources & co
-
-**Slides at:** https://github.com/Garbaz/bachelor-thesis
+- Probabilistic programs are computationally general models
+- Explore the trace space of probabilistic programs for inference
+- Embed probabilistic programs with macros
+- Challenge: General efficient inference algorithms
+- Practice: Combine with neural network methods
+- **Slides at:** https://github.com/Garbaz/bachelor-thesis
