@@ -138,12 +138,12 @@ fn coin(observations: Vec<bool>) -> f64 {
   - Propose random values, accept them with probability $\pi(x)$
   - Problem: Inefficient
 - Better idea: **Markov Chain Monte Carlo**
-  - Propose random values, but not completely random
+  - Propose random values, but not independently
   - Accept them with just the right probability
   - Prefer high-probability regions in _support_ of $\pi$
 
 
-## Markov Chain Monte Carlo _(cont.)_
+## Metropolis Hastings
 
 - Take a simple _proposal kernel_ $q[x]$
 - Start at a random value $x_0$
@@ -152,7 +152,7 @@ fn coin(observations: Vec<bool>) -> f64 {
     &emsp; $\hat{x}_{t+1} \sim q[x_t]$
   - Make it the next value,
     or don't, randomly
-      - _acceptance ratio_ based upon $\pi(x_t)$ and $\pi(\hat{x}_{t+1})$
+      - _acceptance ratio_ $\frac{\pi(\hat{x}_{t+1})}{\pi(x_t)} \frac{q(x_t | \hat{x}_{t+1})}{q(\hat{x}_{t+1} | x_t)}$
 
 <div style="position: fixed; top: 160px; right: 40px;">
   <video src="mcmc.webm"
@@ -217,7 +217,7 @@ fn example10() -> f64 {
 
 - Macros!
 - `#[prob]` translates ordinary function into probabilistic program
-  - `Fn(Trace) → (Trace, f64, T)` for some sample type `T`
+  - `Fn(Trace) → (Trace, f64, T)` for type `T` of samples
   - Injects tracing scaffolding
 - `sample!` & `observe!` read and modify trace
 - Inference just normal higher-order function
