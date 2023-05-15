@@ -128,7 +128,7 @@ fn coin(observations: Vec<bool>) -> f64 {
 - We have some probabilistic program
 - How do we draw representative samples?
 - Just run it?
-  - Problem: How do we respect _observe_ statements?
+  - Problem: How do we respect observe statements?
 - Solution: Markov Chain Monte Carlo
 
 
