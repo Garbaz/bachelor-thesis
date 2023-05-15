@@ -230,5 +230,5 @@ fn example10() -> f64 {
 - Explore the trace space of probabilistic programs for inference
 - Embed probabilistic programs with macros
 - Challenge: General efficient inference algorithms
-- Practice: Combine with neural network methods
+- Practice: Combine with machine learning methods
 - **Slides at:** https://github.com/Garbaz/bachelor-thesis
