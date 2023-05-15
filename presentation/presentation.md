@@ -120,11 +120,13 @@ fn coin(observations: Vec<bool>) -> f64 {
 }
 ```
 
+- ⇒ Probabilistic program represents structured space of programs
+
 
 ## Inference
 
 - We have some probabilistic program
-- How do we actually draw samples from it?
+- How do we draw representative samples?
 - Just run it?
   - Problem: How do we respect _observe_ statements?
 - Solution: Markov Chain Monte Carlo
@@ -175,8 +177,9 @@ fn coin(observations: Vec<bool>) -> f64 {
 - We can't calculate probability of return values
   - ⇒ We can't apply MCMC directly
 - But we can calculate probability of a _trace_ of $f$
+- Trace ⇔ deterministic instance of $f$
 
-<div style="position: fixed; left: 190px; bottom: 100px; width: 400px;">
+<div style="position: fixed; left: 250px; bottom: 40px; width: 400px;">
   <img src="trace2.png" height="170"></img>
 </div>
 
