@@ -179,7 +179,7 @@ fn coin(observations: Vec<bool>) -> f64 {
 - But we can calculate probability of a _trace_ of $f$
 - Trace ⇔ deterministic instance of $f$
 
-<div style="position: fixed; left: 250px; bottom: 40px; width: 400px;">
+<div style="position: fixed; left: 250px; bottom: 90px; width: 400px;">
   <img src="trace2.png" height="170"></img>
 </div>
 
